@@ -19,6 +19,13 @@ module.exports = {
 				schemaType: {
 					type: String
 				}
+			},
+			name: {
+				label: 'Name',
+				schemaType: {
+					first: { type: String },
+					last: { type: String }
+				}
 			}
 		},
 		meta: {
@@ -29,7 +36,7 @@ module.exports = {
 			write: 'admin'
 		}
 	},
-	
+
 	posts: {
 		singular: 'Post',
 		fields: {
@@ -62,7 +69,7 @@ module.exports = {
 			}
 		}
 	},
-	
+
 	tags: {
 		singular: 'Tag',
 		fields: {},
