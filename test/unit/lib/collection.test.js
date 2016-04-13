@@ -6,6 +6,7 @@ const chaiAsPromised  = require('chai-as-promised')
 const mongoose        = require('mongoose')
 const Collection      = require('../../../lib/collection')
 const collectionDefs  = require('../../fixtures/collections')
+const config          = require('../../fixtures/ichabod-config')
 
 const expect = chai.expect
 const fixtures = {
@@ -41,6 +42,14 @@ const fixtures = {
 chai.use(chaiAsPromised)
 
 describe('Collection', function() {
+
+	before(function() {
+		mongoose.connect(`mongodb://${config.connection.host}:${config.connection.port}/${config.connection.database}`)
+	})
+
+	after(function() {
+		mongoose.connection.close()
+	})
 
 	describe('constructor()', function() {
 		let testCollection

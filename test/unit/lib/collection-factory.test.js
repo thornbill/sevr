@@ -26,8 +26,7 @@ describe('CollectionFactory', () => {
 	})
 
 	after(function() {
-		mongoose.connection.db.dropDatabase()
-		CollectionFactory._reset()
+		CollectionFactory._destory()
 		delete mongoose.connection.models['User']
 		delete mongoose.connection.models['Post']
 	})
