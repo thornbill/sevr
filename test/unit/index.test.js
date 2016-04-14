@@ -35,12 +35,6 @@ describe('Ichabod', function() {
 		expect(ich.types).to.haveOwnProperty('Foo')
 	})
 
-	it('should create the collections', function() {
-		const ich = new Ichabod(require(paths.config))
-		expect(ich.collections).to.haveOwnProperty('posts')
-		expect(ich.collections).to.haveOwnProperty('authors')
-	})
-
 	describe('connect()', function() {
 
 		it('should return a promise', function(done) {
@@ -68,6 +62,16 @@ describe('Ichabod', function() {
 			}).catch(() => {
 				done()
 			})
+		})
+
+		it('should create the collections', function(done) {
+			const ich = new Ichabod(require(paths.config))
+			const result = ich.connect()
+			result.then(() => {
+				expect(ich.collections).to.haveOwnProperty('posts')
+				expect(ich.collections).to.haveOwnProperty('authors')
+				done()
+			}).catch(done)
 		})
 
 	})

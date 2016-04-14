@@ -4,13 +4,13 @@
  * Ichabod
  * ---
  * Initialize the ichabod core.
- * 
+ *
  */
 
 const mongoose          = require('mongoose')
 const TypeLoader        = require('./lib/type-loader')
 const DefinitionLoader  = require('./lib/definition-loader')
-const CollectionFactory = require('./lib/collection-factory')
+const CollectionFactory = require('./collection-factory')
 const defaultConfig     = require('./default-config')
 
 class Ichabod {
@@ -18,7 +18,6 @@ class Ichabod {
 		this._config = Object.assign({}, defaultConfig, config)
 		this._types = TypeLoader(this.config.types)
 		this._definitions = DefinitionLoader(this.config.collections, this.types)
-		this._collectionFactory = new CollectionFactory(this._definitions)
 	}
 
 	get config() {
@@ -33,12 +32,20 @@ class Ichabod {
 		return Object.assign({}, this._definitions)
 	}
 
+	get factory() {
+		return this._collectionFactory
+	}
+
 	get collections() {
 		return this._collectionFactory.collections
 	}
 
-	get db() {
+	get connection() {
 		return this._db
+	}
+
+	get server() {
+		return this._server
 	}
 
 	/**
@@ -55,7 +62,10 @@ class Ichabod {
 				pass: dbConfig.password
 			})
 			this._db.once('error', err => { rej(err) })
-			this._db.once('open', () => { res() })
+			this._db.once('open', () => {
+				this._collectionFactory = new CollectionFactory(this._definitions, this._db)
+				res()
+			})
 		})
 	}
 
@@ -65,7 +75,7 @@ class Ichabod {
 	 * @private
 	 */
 	static _destroyFactory() {
-		CollectionFactory._destory()
+		CollectionFactory._destroy()
 	}
 }
 

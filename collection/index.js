@@ -3,7 +3,7 @@
 const format        = require('util').format
 const _             = require('lodash')
 const mongoose      = require('mongoose')
-const SchemaBuilder = require('./schema-builder')
+const SchemaBuilder = require('../lib/schema-builder')
 
 const requiredProperties = {
 	base: [
@@ -28,6 +28,7 @@ class Collection {
 		this._name = name
 		this._definition = _.defaultsDeep({}, def)
 		this._factory = factory
+		this._connection = this._factory.connection
 
 		// Normalize definition fields by adding a name property
 		// tht matches the field key
@@ -46,10 +47,10 @@ class Collection {
 		// Create the mongoose model
 		try {
 			// Do not attempt to recreate the model if it already exists
-			if (!mongoose.connection.models.hasOwnProperty(this._definition.singular)) {
-				this._model = mongoose.model(this._definition.singular, SchemaBuilder.create(this._definition))
+			if (!this._connection.models.hasOwnProperty(this._definition.singular)) {
+				this._model = this._connection.model(this._definition.singular, SchemaBuilder.create(this._definition))
 			} else {
-				this._model = mongoose.connection.models[this._definition.singular]
+				this._model = this._connection.models[this._definition.singular]
 			}
 		} catch (err) {
 			throw new Error(format('Failed to create collection `%s`:', this._name, err))
@@ -384,7 +385,7 @@ class Collection {
 
 		return new Promise((res, rej) => {
 			// Check for the existence of the collection
-			mongoose.connection.db.listCollections({
+			this._connection.db.listCollections({
 				name: self.name
 			})
 			.next((err, info) => {
@@ -396,7 +397,7 @@ class Collection {
 		.then((hasCollection) => {
 			if (hasCollection) {
 				return new Promise((res, rej) => {
-					mongoose.connection.db.dropCollection(self.name, (err) => {
+					this._connection.db.dropCollection(self.name, (err) => {
 						if (err) return rej(err)
 						res()
 					})
