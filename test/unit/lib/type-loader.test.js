@@ -25,10 +25,13 @@ describe('TypeLoader', function() {
 		expect(types).to.haveOwnProperty('Foo')
 	})
 
-	it('should return an object where each property is a function', function() {
+	it('should return an object where each property is a function that extends the type', function() {
 		const types = TypeLoader(paths.normal)
 		expect(types.Email).to.be.instanceof(Function)
 		expect(types.Foo).to.be.instanceof(Function)
+
+		expect(types.Email({ required: true })).to.haveOwnProperty('required', true)
+		expect(types.Foo({ name: 'FooType' })).to.haveOwnProperty('name', 'FooType')
 	})
 
 	it('should contain a property for each mongoose type', function() {
