@@ -2,6 +2,7 @@
 'use strict'
 
 const chai     = require('chai')
+const _        = require('lodash')
 const Ichabod  = require('../../index')
 
 const expect = chai.expect
@@ -52,8 +53,8 @@ describe('Ichabod', function() {
 
 		it('should reject with bad connection', function(done) {
 			const ich = new Ichabod(
-				Object.assign({}, require(paths.config), {
-					connection: { port: 1337 }
+				_.merge({}, require(paths.config), {
+					connection: { host: 'foobar', port: 1337 }
 				})
 			)
 			const result = ich.connect()

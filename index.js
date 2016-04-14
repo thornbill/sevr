@@ -8,6 +8,7 @@
  */
 
 const mongoose          = require('mongoose')
+const _                 = require('lodash')
 const TypeLoader        = require('./lib/type-loader')
 const DefinitionLoader  = require('./lib/definition-loader')
 const CollectionFactory = require('./collection-factory')
@@ -15,7 +16,7 @@ const defaultConfig     = require('./default-config')
 
 class Ichabod {
 	constructor(config) {
-		this._config = Object.assign({}, defaultConfig, config)
+		this._config = _.mergeWith({}, defaultConfig, config)
 		this._types = TypeLoader(this.config.types)
 		this._definitions = DefinitionLoader(this.config.collections, this.types)
 	}
