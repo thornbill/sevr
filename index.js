@@ -55,7 +55,7 @@ class Ichabod {
 	 */
 	connect() {
 		const dbConfig = this._config.connection
-		const connUri = `mongodb://${dbConfig.host}/${dbConfig.name}:${dbConfig.port}`
+		const connUri = `mongodb://${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`
 
 		return new Promise((res, rej) => {
 			this._db = mongoose.createConnection(connUri, {
