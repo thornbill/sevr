@@ -65,6 +65,22 @@ class Ichabod {
 			this._db.once('error', err => { rej(err) })
 			this._db.once('open', () => {
 				this._collectionFactory = new CollectionFactory(this._definitions, this._db)
+			})
+		})
+	}
+
+	/**
+	 * Start the express web server
+	 * @return {[type]} [description]
+	 */
+	startServer() {
+		const serverConfig = this._config.server
+
+		return new Promise((res, rej) => {
+			this._server.listen(serverConfig.port, serverConfig.host, (err) => {
+				if (err) return rej(err)
+
+				console.log(`Ichabod listening on ${serverConfig.host}:${serverConfig.port}`)
 				res()
 			})
 		})

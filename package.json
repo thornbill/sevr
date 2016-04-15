@@ -16,6 +16,7 @@
   "author": "David Street",
   "license": "MIT",
   "dependencies": {
+    "express": "^4.13.4",
     "lodash": "^4.10.0",
     "mongoose": "^4.4.12",
     "require-all": "^2.0.0"
