@@ -14,6 +14,7 @@ const TypeLoader        = require('./lib/type-loader')
 const DefinitionLoader  = require('./lib/definition-loader')
 const CollectionFactory = require('./collection-factory')
 const defaultConfig     = require('./default-config')
+const defaultLogger     = require('./console-logger')
 
 class Ichabod {
 	constructor(config) {
@@ -22,6 +23,7 @@ class Ichabod {
 		this._definitions = DefinitionLoader(this.config.collections, this.types)
 		this._server = express()
 		this._plugins = []
+		this._logger = defaultLogger
 	}
 
 	get config() {
