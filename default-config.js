@@ -28,5 +28,14 @@ module.exports = {
 	 * Path to the schema types directory
 	 * @type {String}
 	 */
-	types: 'types'
+	types: 'types',
+
+	/**
+	 * Web server configuration
+	 * @type {Object}
+	 */
+	server: {
+		host: '127.0.0.1',
+		port: 3000
+	}
 }

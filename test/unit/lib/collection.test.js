@@ -4,7 +4,7 @@
 const chai            = require('chai')
 const chaiAsPromised  = require('chai-as-promised')
 const mongoose        = require('mongoose')
-const Collection      = require('../../../lib/collection')
+const Collection      = require('../../../collection')
 const collectionDefs  = require('../../fixtures/collections')
 const config          = require('../../fixtures/ichabod-config')
 
@@ -43,23 +43,29 @@ chai.use(chaiAsPromised)
 
 describe('Collection', function() {
 
+	let db
+	let factory = {
+		connection: null
+	}
+
 	before(function() {
-		mongoose.connect(`mongodb://${config.connection.host}:${config.connection.port}/${config.connection.database}`)
+		db = mongoose.createConnection(`mongodb://${config.connection.host}:${config.connection.port}/${config.connection.database}`)
+		factory.connection = db
 	})
 
 	after(function() {
-		mongoose.connection.close()
+		db.close()
 	})
 
 	describe('constructor()', function() {
 		let testCollection
 
 		before(function() {
-			testCollection = new Collection('test1', fixtures.definitions.test1, {})
+			testCollection = new Collection('test1', fixtures.definitions.test1, factory)
 		})
 
 		after(function() {
-			delete mongoose.connection.models['Test1']
+			delete db.models['Test1']
 		})
 
 		it('should set the collection name', function() {
@@ -181,12 +187,13 @@ describe('Collection', function() {
 					return {
 						model: {}
 					}
-				}
+				},
+				connection: factory.connection
 			})
 		})
 
 		after(function() {
-			delete mongoose.connection.models['Test1']
+			delete db.models['Test1']
 		})
 
 		it('should return a field object', function() {
@@ -210,12 +217,13 @@ describe('Collection', function() {
 					return {
 						model: {}
 					}
-				}
+				},
+				connection: factory.connection
 			})
 		})
 
 		after(function() {
-			delete mongoose.connection.models['Test1']
+			delete db.models['Test1']
 		})
 
 		it('should return all field definitions', function() {
@@ -242,11 +250,11 @@ describe('Collection', function() {
 						schemaType: [{ name: 'emailType', type: String }]
 					}
 				}
-			}, {})
+			}, factory)
 		})
 
 		after(function() {
-			delete mongoose.connection.models['Test1']
+			delete db.models['Test1']
 		})
 
 		it('should return the type name if schemaType is object', function() {
@@ -263,12 +271,12 @@ describe('Collection', function() {
 		let collectionWithoutMeta
 
 		before(function() {
-			collectionWithMeta = new Collection('users', collectionDefs.users, {})
-			collectionWithoutMeta = new Collection('posts', collectionDefs.posts, {})
+			collectionWithMeta = new Collection('users', collectionDefs.users, factory)
+			collectionWithoutMeta = new Collection('posts', collectionDefs.posts, factory)
 		})
 
 		after(function() {
-			mongoose.connection.db.dropDatabase()
+			db.db.dropDatabase()
 		})
 
 		it('should return the meta property specified', function() {
@@ -300,12 +308,12 @@ describe('Collection', function() {
 		let postsCollection
 
 		before(function() {
-			usersCollection = new Collection('users', collectionDefs.users, {})
-			postsCollection = new Collection('posts', collectionDefs.posts, {})
+			usersCollection = new Collection('users', collectionDefs.users, factory)
+			postsCollection = new Collection('posts', collectionDefs.posts, factory)
 		})
 
 		after(function() {
-			mongoose.connection.db.dropDatabase()
+			db.db.dropDatabase()
 		})
 
 		it('should return true if read permission matches user', function() {
@@ -327,13 +335,13 @@ describe('Collection', function() {
 		let tagsCollection
 
 		before(function() {
-			usersCollection = new Collection('users', collectionDefs.users, {})
-			postsCollection = new Collection('posts', collectionDefs.posts, {})
-			tagsCollection = new Collection('tags', collectionDefs.tags, {})
+			usersCollection = new Collection('users', collectionDefs.users, factory)
+			postsCollection = new Collection('posts', collectionDefs.posts, factory)
+			tagsCollection = new Collection('tags', collectionDefs.tags, factory)
 		})
 
 		after(function() {
-			mongoose.connection.db.dropDatabase()
+			db.db.dropDatabase()
 		})
 
 		it('should return true if write permission matches user', function() {
@@ -360,8 +368,8 @@ describe('Collection', function() {
 		]
 
 		before(function(done) {
-			usersCollection = new Collection('users', collectionDefs.users, {})
-			postsCollection = new Collection('posts', collectionDefs.posts, {})
+			usersCollection = new Collection('users', collectionDefs.users, factory)
+			postsCollection = new Collection('posts', collectionDefs.posts, factory)
 
 			usersCollection.model.create([
 				{
@@ -380,7 +388,7 @@ describe('Collection', function() {
 		})
 
 		after(function() {
-			mongoose.connection.db.dropDatabase()
+			db.db.dropDatabase()
 		})
 
 		describe('readById()', function() {
@@ -529,7 +537,7 @@ describe('Collection', function() {
 			})
 
 			after(function() {
-				mongoose.connection.db.dropCollection('posts')
+				db.db.dropCollection('posts')
 			})
 
 			it('should return a promise', function() {
@@ -581,7 +589,7 @@ describe('Collection', function() {
 			})
 
 			after(function() {
-				mongoose.connection.db.dropCollection('posts')
+				db.db.dropCollection('posts')
 			})
 
 			it('should return a promise', function() {
@@ -626,7 +634,7 @@ describe('Collection', function() {
 			})
 
 			after(function() {
-				mongoose.connection.db.dropCollection('posts')
+				db.db.dropCollection('posts')
 			})
 
 			it('should return a promise', function() {

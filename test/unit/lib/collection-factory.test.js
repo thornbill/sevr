@@ -3,16 +3,19 @@
 
 const chai              = require('chai')
 const mongoose          = require('mongoose')
-const Collection        = require('../../../lib/collection')
-const CollectionFactory = require('../../../lib/collection-factory')
+const Collection        = require('../../../collection')
+const CollectionFactory = require('../../../collection-factory')
+const config            = require('../../fixtures/ichabod-config')
 
 const expect = chai.expect
 
 describe('CollectionFactory', () => {
 
 	let factory
+	let db
 
 	before(function() {
+		db = mongoose.createConnection(`mongodb://${config.connection.host}:${config.connection.port}/${config.connection.database}`)
 		factory = new CollectionFactory({
 			users: {
 				singular: 'User',
@@ -22,13 +25,14 @@ describe('CollectionFactory', () => {
 				singular: 'Post',
 				fields: {}
 			}
-		})
+		}, db)
 	})
 
 	after(function() {
-		CollectionFactory._destory()
-		delete mongoose.connection.models['User']
-		delete mongoose.connection.models['Post']
+		CollectionFactory._destroy()
+		delete db.models['User']
+		delete db.models['Post']
+		db.close()
 	})
 
 	describe('constructor()', function() {

@@ -1,12 +1,12 @@
 'use strict'
 
 const _          = require('lodash')
-const Collection = require('./collection')
+const Collection = require('../collection')
 
 let factoryInstance = null
 
 class CollectionFactory {
-	constructor(defs) {
+	constructor(defs, connection) {
 		if (!factoryInstance) {
 			factoryInstance = this
 		} else {
@@ -15,6 +15,7 @@ class CollectionFactory {
 
 		this._instances = {}
 		this._definitions = _.assign({}, defs)
+		this._connection = connection
 
 		// Add definition key to name property in definition
 		// and initialize each collection
@@ -58,11 +59,15 @@ class CollectionFactory {
 		return Object.assign({}, this._instances)
 	}
 
+	get connection() {
+		return this._connection
+	}
+
 	/**
 	 * Destroy the factory instance. This is for testing only.
 	 * @private
 	 */
-	static _destory() {
+	static _destroy() {
 		factoryInstance = null
 	}
 }
