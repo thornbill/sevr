@@ -54,6 +54,20 @@ class Ichabod {
 		return this._server
 	}
 
+	get logger() {
+		return this._logger
+	}
+
+	set logger(logger) {
+		['verbose', 'info', 'warning', 'error', 'critical'].forEach((type, i, all) => {
+			if (!logger.hasOwnProperty(type)) {
+				throw new Error(`Logger must have all methods: ${all.join(', ')}`)
+			}
+		})
+
+		this._logger = logger
+	}
+
 	/**
 	 * Attach a plugin
 	 * @param  {Function} plugin
@@ -103,7 +117,7 @@ class Ichabod {
 			this._server.listen(serverConfig.port, serverConfig.host, (err) => {
 				if (err) return rej(err)
 
-				console.log(`Ichabod listening on ${serverConfig.host}:${serverConfig.port}`)
+				this._logger.info(`Ichabod listening on ${serverConfig.host}:${serverConfig.port}`)
 				res()
 			})
 		})
