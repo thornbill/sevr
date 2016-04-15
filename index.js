@@ -8,6 +8,7 @@
  */
 
 const mongoose          = require('mongoose')
+const express           = require('express')
 const _                 = require('lodash')
 const TypeLoader        = require('./lib/type-loader')
 const DefinitionLoader  = require('./lib/definition-loader')
@@ -19,6 +20,8 @@ class Ichabod {
 		this._config = _.mergeWith({}, defaultConfig, config)
 		this._types = TypeLoader(this.config.types)
 		this._definitions = DefinitionLoader(this.config.collections, this.types)
+		this._server = express()
+		this._plugins = []
 	}
 
 	get config() {
@@ -50,6 +53,22 @@ class Ichabod {
 	}
 
 	/**
+	 * Attach a plugin
+	 * @param  {Function} plugin
+	 * @param  {Object} config
+	 */
+	attach(plugin, config) {
+		if (typeof plugin !== 'function') {
+			throw new Error('Plugin must be a function')
+		}
+
+		this._plugins.push({
+			fn: plugin,
+			config: config
+		})
+	}
+
+	/**
 	 * Connect to the database
 	 * @return {promise}
 	 */
@@ -65,6 +84,8 @@ class Ichabod {
 			this._db.once('error', err => { rej(err) })
 			this._db.once('open', () => {
 				this._collectionFactory = new CollectionFactory(this._definitions, this._db)
+				this._initPlugins()
+				res()
 			})
 		})
 	}
@@ -93,6 +114,16 @@ class Ichabod {
 	 */
 	static _destroyFactory() {
 		CollectionFactory._destroy()
+	}
+
+	/**
+	 * Initialize the array of plugins
+	 * @private
+	 */
+	_initPlugins() {
+		this._plugins.forEach(plugin => {
+			plugin.fn(this, plugin.config)
+		})
 	}
 }
 
