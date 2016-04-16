@@ -77,6 +77,26 @@ module.exports = {
 			read: '*',
 			write: ['admin','author']
 		}
+	},
+
+	sample: {
+		singular: 'Sample',
+		fields: {
+			withSetter: {
+				label: 'With Setter',
+				schemaType: {
+					type: String,
+					set: () => { return 'hardcoded-set' }
+				}
+			},
+			withGetter: {
+				label: 'With Getter',
+				schemaType: {
+					type: String,
+					get: () => { return 'hardcoded-get' }
+				}
+			}
+		}
 	}
 
 }
