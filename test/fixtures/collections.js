@@ -97,6 +97,30 @@ module.exports = {
 				}
 			}
 		}
+	},
+
+	authCollection: {
+		singular: 'AuthUser',
+		fields: {
+			username: {
+				label: 'Username',
+				schemaType: { type: String }
+			},
+			password: {
+				label: 'Password',
+				schemaType: { type: String }
+			}
+		}
+	},
+
+	authErrorCollection: {
+		singular: 'AuthErrorUser',
+		fields: {
+			name: {
+				label: 'Name',
+				schemaType: { type: String }
+			}
+		}
 	}
 
 }

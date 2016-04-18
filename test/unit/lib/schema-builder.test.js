@@ -18,7 +18,7 @@ describe('SchemaBuilder', () => {
 
 		it('should apply getters and setters', function() {
 			const schema = SchemaBuilder.create(collectionDefs.sample)
-			expect(schema.path('withSetter').options.set).to.be.a.function
+			expect(schema.path('withSetter').options.set).to.be.a('function')
 			expect(schema.path('withSetter').options.set()).to.equal('hardcoded-set')
 		})
 	})
