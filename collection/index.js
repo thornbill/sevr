@@ -331,13 +331,19 @@ class Collection {
 	/**
 	 * Read the collection
 	 * @param   {Object}  [query]
+	 * @param   {Array}   [selectFields]
 	 * @param   {Boolean} [populate=false]
 	 * @param   {Boolean} [single=false]
-	 * @returns {Promise}
+	 * @param   {Boolean} [returnQuery=false]
+	 * @returns {Promise|Query}
 	 */
-	read(query, populate, single) {
+	read(query, selectFields, populate, single, returnQuery) {
 		const popFields = populate ? this.populationFields : []
 		let modelQuery = this.model
+
+		if (selectFields && !Array.isArray(selectFields)) {
+			selectFields = [selectFields]
+		}
 
 		if (single) {
 			modelQuery = modelQuery.findOne(query)
@@ -345,9 +351,17 @@ class Collection {
 			modelQuery = modelQuery.find(query)
 		}
 
-		return modelQuery
-			.populate(popFields)
-			.exec()
+		modelQuery = modelQuery.populate(popFields)
+
+		if (selectFields) {
+			modelQuery = modelQuery.select(selectFields.join(' '))
+		}
+
+		if (returnQuery) {
+			return modelQuery
+		} else {
+			return modelQuery.exec()
+		}
 	}
 
 	/**
@@ -355,31 +369,36 @@ class Collection {
 	 * @param   {ObjectId|String|Number} id
 	 * @param   {Array} [selectFields]
 	 * @param   {Boolean} [populate=false]
-	 * @returns {Promise}
+	 * @param   {Boolean} [returnQuery=false]
+	 * @returns {Promise|Query}
 	 */
-	readById(id, selectFields, populate) {
+	readById(id, selectFields, populate, returnQuery) {
 		const popFields = populate ? this.populationFields : []
-		let query
+		let modelQuery
 
 		if (selectFields && !Array.isArray(selectFields)) {
 			selectFields = [selectFields]
 		}
 
-		query = this.model
+		modelQuery = this.model
 			.findById(id)
 			.populate(popFields)
 
 		if (selectFields) {
-			query = query.select(selectFields.join(' '))
+			modelQuery = modelQuery.select(selectFields.join(' '))
 		}
 
-		return query.exec()
+		if (returnQuery) {
+			return modelQuery
+		} else {
+			return modelQuery.exec()
+		}
 	}
 
 	/**
 	 * Create a new document within the collection
 	 * The resolved document will populate all referenced fields
-	 * @param   {Object}     data
+	 * @param   {Object}  data
 	 * @returns {Promise}
 	 */
 	create(data) {
@@ -397,7 +416,7 @@ class Collection {
 
 	/**
 	 * Overwrite the collection with new documents
-	 * @param   {Array}      docs
+	 * @param   {Array}   docs
 	 * @returns {Promise}
 	 */
 	update(docs) {

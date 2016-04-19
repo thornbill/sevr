@@ -408,6 +408,10 @@ describe('Collection', function() {
 				expect(usersCollection.readById(12345)).to.be.instanceof(Promise)
 			})
 
+			it('should return a query', function() {
+				expect(usersCollection.readById(12345, null, null, true)).to.be.instanceof(mongoose.Query)
+			})
+
 			it('should resolve with a single document', function() {
 				const result = usersCollection.readById(ids[0].toString())
 
@@ -424,6 +428,24 @@ describe('Collection', function() {
 					expect(result).to.eventually.have.deep.property('author.username', 'testDoc'),
 					expect(result).to.eventually.have.deep.property('author.email', 'test@doc.com')
 				])
+			})
+
+			it('should not include fields where `select` is false in document', function() {
+				const result = postsCollection.readById(postId, null, true)
+
+				return result
+					.then(post => {
+						expect(post.version).to.be.undefined
+					})
+			})
+
+			it('should include selected fields when overriding `select` from schema', function() {
+				const result = postsCollection.readById(postId, '+version', true)
+
+				return result
+					.then(post => {
+						expect(post.version).to.equal(1)
+					})
 			})
 
 			it('should resolve with null when no matching id', function() {

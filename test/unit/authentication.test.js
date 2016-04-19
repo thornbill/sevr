@@ -146,6 +146,10 @@ describe('Authentication', function() {
 
 	describe('createToken()', function() {
 
+		afterEach(() => {
+			return authCollection.model.remove({})
+		})
+
 		it('should return a promise', function() {
 			const auth = new Authentication(secret)
 			auth.enable(authCollection)
@@ -177,6 +181,10 @@ describe('Authentication', function() {
 
 	describe('verifyToken()', function() {
 
+		afterEach(() => {
+			return authCollection.model.remove({})
+		})
+
 		it('should return a promise', function() {
 			const auth = new Authentication(secret)
 			auth.enable(authCollection)
@@ -185,6 +193,7 @@ describe('Authentication', function() {
 		})
 
 		it('should resolve with a user document', function(done) {
+			this.timeout(2500)
 			const auth = new Authentication(secret)
 			auth.enable(authCollection)
 
