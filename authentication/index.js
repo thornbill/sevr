@@ -1,11 +1,13 @@
 'use strict'
 
 const bcrypt = require('bcryptjs')
+const jwt    = require('jsonwebtoken')
 
 class Authentication {
-	constructor() {
+	constructor(tokenSecret) {
 		this._enabled = false
 		this._collection = undefined
+		this._tokenSecret = tokenSecret
 	}
 
 	get isEnabled() {
@@ -43,6 +45,8 @@ class Authentication {
 		}, true, true)
 		.then(user => {
 			return new Promise((res, rej) => {
+				if (!user) return rej()
+
 				bcrypt.compare(creds.password, user.password, (err, valid) => {
 					if (err || !valid) {
 						return rej()
@@ -50,6 +54,43 @@ class Authentication {
 
 					res(user)
 				})
+			})
+		})
+	}
+
+	/**
+	 * Create a JWT token with the given
+	 * user information.
+	 * Returned promise resolves with the token
+	 * @param  {Object} user
+	 * @return {Promise}
+	 */
+	createToken(user) {
+		return new Promise((res, rej) => {
+			try {
+				jwt.sign(user.toObject(), this._tokenSecret, null, token => {
+					res(token)
+				})
+			} catch(err) {
+				rej(err)
+			}
+		})
+	}
+
+	/**
+	 * Verify a JWT token.
+	 * Returned promise resolves with the user document
+	 * @param  {String} token
+	 * @return {Promise}
+	 */
+	verifyToken(token) {
+		return new Promise((res, rej) => {
+			jwt.verify(token, this._tokenSecret, (err, user) => {
+				if (err) {
+					return rej(err)
+				}
+
+				res(user)
 			})
 		})
 	}

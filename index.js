@@ -25,7 +25,7 @@ class Ichabod {
 		this._server = express()
 		this._plugins = []
 		this._logger = defaultLogger
-		this._auth = new Authentication()
+		this._auth = new Authentication(this._config.secret)
 	}
 
 	get config() {

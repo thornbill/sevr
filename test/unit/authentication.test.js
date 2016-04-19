@@ -4,12 +4,14 @@
 const chai           = require('chai')
 const mongoose       = require('mongoose')
 const bcrypt         = require('bcryptjs')
+const jwt            = require('jsonwebtoken')
 const Authentication = require('../../authentication')
 const Collection     = require('../../collection')
 const collectionDefs = require('../fixtures/collections')
 const config         = require('../fixtures/ichabod-config')
 
 const expect = chai.expect
+const secret = 'imasecret'
 
 describe('Authentication', function() {
 
@@ -79,6 +81,10 @@ describe('Authentication', function() {
 
 	describe('validateCredentials()', function() {
 
+		afterEach(() => {
+			return authCollection.model.remove({})
+		})
+
 		it('should return a promise', function() {
 			const auth = new Authentication()
 			auth.enable(authCollection)
@@ -106,15 +112,96 @@ describe('Authentication', function() {
 			.catch(done)
 		})
 
-		it('should reject when unmatched', function(done) {
+		it('should reject when no user is found', function(done) {
 			const auth = new Authentication()
 			auth.enable(authCollection)
 
 			auth.validateCredentials({
-				username: 'doesnotexit',
+				username: 'doesnotexist',
 				password: 'bad_pass'
 			})
 			.then(done)
+			.catch(done)
+		})
+
+		it('should reject when password does not match', function(done) {
+			const auth = new Authentication()
+			auth.enable(authCollection)
+
+			authCollection.model.create({
+				username: 'validateTest',
+				password: 'validate_me'
+			})
+			.then(() => {
+				return auth.validateCredentials({
+					username: 'validateTest',
+					password: 'bad_pass'
+				})
+			})
+			.then(done)
+			.catch(done)
+		})
+
+	})
+
+	describe('createToken()', function() {
+
+		it('should return a promise', function() {
+			const auth = new Authentication(secret)
+			auth.enable(authCollection)
+
+			expect(auth.createToken()).to.be.instanceof(Promise)
+		})
+
+		it('should resolve with a jwt', function(done) {
+			const auth = new Authentication(secret)
+			auth.enable(authCollection)
+
+			authCollection.model.create({
+				username: 'validateTest',
+				password: 'validate_me'
+			})
+			.then(user => {
+				return auth.createToken(user)
+			})
+			.then(token => {
+				const decoded = jwt.decode(token, { complete: true })
+				expect(decoded).to.haveOwnProperty('header')
+				expect(decoded).to.haveOwnProperty('payload')
+				done()
+			})
+			.catch(done)
+		})
+
+	})
+
+	describe('verifyToken()', function() {
+
+		it('should return a promise', function() {
+			const auth = new Authentication(secret)
+			auth.enable(authCollection)
+
+			expect(auth.verifyToken()).to.be.instanceof(Promise)
+		})
+
+		it('should resolve with a user document', function(done) {
+			const auth = new Authentication(secret)
+			auth.enable(authCollection)
+
+			authCollection.model.create({
+				username: 'validateTest',
+				password: 'validate_me'
+			})
+			.then(user => {
+				jwt.sign(user.toObject(), secret, null, token => {
+					auth.verifyToken(token)
+						.then(user => {
+							expect(user).to.haveOwnProperty('username', 'validateTest')
+							done()
+						})
+						.catch(done)
+				})
+			})
 			.catch(done)
 		})
 
