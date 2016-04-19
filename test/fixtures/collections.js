@@ -66,6 +66,10 @@ module.exports = {
 					ref: 'User',
 					required: true
 				}
+			},
+			version: {
+				label: 'Version',
+				schemaType: { type: Number, default: 1, select: false }
 			}
 		}
 	},
@@ -119,6 +123,20 @@ module.exports = {
 			name: {
 				label: 'Name',
 				schemaType: { type: String }
+			}
+		}
+	},
+
+	selectCollection: {
+		singular: 'SelectCollection',
+		fields: {
+			visible: {
+				label: 'Visible',
+				schemaType: { type: String }
+			},
+			hidden: {
+				label: 'Hidden',
+				schemaType: { type: String, select: false }
 			}
 		}
 	}

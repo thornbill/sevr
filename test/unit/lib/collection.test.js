@@ -426,6 +426,15 @@ describe('Collection', function() {
 				])
 			})
 
+			it('should not include fields where `select` is false in document', function() {
+				const result = postsCollection.readById(postId, null, true)
+
+				return result
+					.then(post => {
+						expect(post.version).to.be.undefined
+					})
+			})
+
 			it('should resolve with null when no matching id', function() {
 				const result = usersCollection.readById(new mongoose.Types.ObjectId())
 

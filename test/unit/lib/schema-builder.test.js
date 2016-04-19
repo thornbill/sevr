@@ -21,6 +21,12 @@ describe('SchemaBuilder', () => {
 			expect(schema.path('withSetter').options.set).to.be.a('function')
 			expect(schema.path('withSetter').options.set()).to.equal('hardcoded-set')
 		})
+
+		it('should apply select', function() {
+			const schema = SchemaBuilder.create(collectionDefs.selectCollection)
+			expect(schema.path('visible').selected).to.be.undefined
+			expect(schema.path('hidden').selected).to.be.false
+		})
 	})
 
 })
