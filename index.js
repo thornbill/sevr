@@ -13,6 +13,7 @@ const _                 = require('lodash')
 const TypeLoader        = require('./lib/type-loader')
 const DefinitionLoader  = require('./lib/definition-loader')
 const CollectionFactory = require('./collection-factory')
+const Authentication    = require('./authentication')
 const defaultConfig     = require('./default-config')
 const defaultLogger     = require('./console-logger')
 
@@ -24,6 +25,7 @@ class Ichabod {
 		this._server = express()
 		this._plugins = []
 		this._logger = defaultLogger
+		this._auth = new Authentication(this._config.secret)
 	}
 
 	get config() {
@@ -56,6 +58,10 @@ class Ichabod {
 
 	get logger() {
 		return this._logger
+	}
+
+	get authentication() {
+		return this._auth
 	}
 
 	set logger(logger) {

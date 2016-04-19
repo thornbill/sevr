@@ -273,6 +273,19 @@ class Collection {
 	}
 
 	/**
+	 * Extend a field schema
+	 * @param  {String} field
+	 * @param  {String} prop
+	 * @param  {*} value
+	 */
+	extendFieldSchema(field, prop, value) {
+		if (!this.getField(field)) return
+		if (typeof this.schema.path(field)[prop] !== 'function') return
+
+		this.schema.path(field)[prop](value)
+	}
+
+	/**
 	 * Check user permissions for type
 	 * @param  {String} user
 	 * @param  {String} type
@@ -319,13 +332,20 @@ class Collection {
 	 * Read the collection
 	 * @param   {Object}  [query]
 	 * @param   {Boolean} [populate=false]
+	 * @param   {Boolean} [single=false]
 	 * @returns {Promise}
 	 */
-	read(query, populate) {
+	read(query, populate, single) {
 		const popFields = populate ? this.populationFields : []
+		let modelQuery = this.model
 
-		return this.model
-			.find(query)
+		if (single) {
+			modelQuery = modelQuery.findOne(query)
+		} else {
+			modelQuery = modelQuery.find(query)
+		}
+
+		return modelQuery
 			.populate(popFields)
 			.exec()
 	}

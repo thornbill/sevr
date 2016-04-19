@@ -22,7 +22,7 @@ the exact needs of the business.
 ## Scalability
 
 Many content management systems are used to deliver high volumes of data to a
-multituide of clients. A modern CMS should be built to scale, offering consistent
+multitude of clients. A modern CMS should be built to scale, offering consistent
 and reliable access.
 
 ## Secure
@@ -40,7 +40,7 @@ development standpoint. Developing themes and plugins around a CMS to get a base
 set of desired functionality is frustrating. Developers should have the freedom
 to develop a solution that meets their needs, not developing extensions that
 meet the many needs of the platform.
- 
+
 ---
 
 ## The Promise
@@ -64,13 +64,14 @@ benefits of an off-the-shelf solution. This is where the Ichabod CMS Framework
 comes in; allowing you to tailor a CMS to the needs of the content and the
 business objectives, not the other way around.
 
-If security, or more specifically, access to the content conrolled by the CMS is
-a major concern for the business, the modular architecture of Ichabod has many
-benefits. Unlike many content management systems, a CMS built on the Ichabod CMS
-Framework can easily be decoupled from the consuming resource--whether it be a
-website, mobile application, or something else entirely. This allows system
-architects to restrict access to the CMS in any way they deem necessary. It
-could live on a separate host, or even the same host on a non-public port.
+If security, or more specifically, access to the content controlled by the CMS
+is a major concern for the business, the modular architecture of Ichabod has
+many benefits. Unlike many content management systems, a CMS built on the
+Ichabod CMS Framework can easily be decoupled from the consuming
+resource, whether it be a website, mobile application, or something else
+entirely. This allows system architects to restrict access to the CMS in any way
+they deem necessary. It could live on a separate host, or even the same host on
+a non-public port.
 
 The Ichabod CMS Framework is built on Node.JS so it has the intrinsic benefit
 of a low-latency request/response cycle. However, if JavaScript and Node.JS

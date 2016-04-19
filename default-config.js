@@ -37,5 +37,11 @@ module.exports = {
 	server: {
 		host: '127.0.0.1',
 		port: 3000
-	}
+	},
+
+	/**
+	 * JWT token secret
+	 * @type {String}
+	 */
+	secret: 'keyboard cat'
 }

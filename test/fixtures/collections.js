@@ -77,6 +77,50 @@ module.exports = {
 			read: '*',
 			write: ['admin','author']
 		}
+	},
+
+	sample: {
+		singular: 'Sample',
+		fields: {
+			withSetter: {
+				label: 'With Setter',
+				schemaType: {
+					type: String,
+					set: () => { return 'hardcoded-set' }
+				}
+			},
+			withGetter: {
+				label: 'With Getter',
+				schemaType: {
+					type: String,
+					get: () => { return 'hardcoded-get' }
+				}
+			}
+		}
+	},
+
+	authCollection: {
+		singular: 'AuthUser',
+		fields: {
+			username: {
+				label: 'Username',
+				schemaType: { type: String }
+			},
+			password: {
+				label: 'Password',
+				schemaType: { type: String }
+			}
+		}
+	},
+
+	authErrorCollection: {
+		singular: 'AuthErrorUser',
+		fields: {
+			name: {
+				label: 'Name',
+				schemaType: { type: String }
+			}
+		}
 	}
 
 }
