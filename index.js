@@ -114,7 +114,7 @@ class Ichabod {
 
 	/**
 	 * Start the express web server
-	 * @return {[type]} [description]
+	 * @return {Promise} [description]
 	 */
 	startServer() {
 		const serverConfig = this._config.server
@@ -145,6 +145,47 @@ class Ichabod {
 	_initPlugins() {
 		this._plugins.forEach(plugin => {
 			plugin.fn(this, plugin.config)
+		})
+	}
+
+	/**
+	 * Initialize the meta collection.
+	 * If the database is new, it will be marked as such, and an object will
+	 * be creted for each collection marking it is as new.
+	 * Resolves with the meta document
+	 * @return {Promise}
+	 * @private
+	 */
+	_initMetaCollection() {
+		const metaName = 'ich_meta'
+		const db = this._db.db
+		const defaultData = {
+			_id: 0,
+			newDatabase: true,
+			collections: Object.keys(this.collections).reduce((obj, key) => {
+				return Object.assign(obj, {
+					[key]: { new: true }
+				})
+			}, {})
+		}
+
+		let metaColl
+		let hasMeta
+		let updateData
+
+		return new Promise((res, rej) => {
+			db.listCollections({}).toArray((err, colls) => {
+				if (err) return rej(err)
+
+				hasMeta = _(colls).map(val => { return val.name }).includes(metaName)
+				metaColl = this._db.collection(metaName)
+				updateData = hasMeta ? { newDatabase: false } : defaultData
+
+				metaColl.updateOne({ _id: 0 }, { $set: updateData }, { upsert: true })
+					.then(() => { return metaColl.findOne({ _id: 0 }) })
+					.then(res)
+					.catch(rej)
+			})
 		})
 	}
 }

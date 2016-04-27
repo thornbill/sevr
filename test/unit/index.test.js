@@ -138,4 +138,40 @@ describe('Ichabod', function() {
 
 	})
 
+	describe('_initMetaCollection()', function() {
+
+		Ichabod._destroyFactory()
+		const ich = new Ichabod(require(paths.config))
+
+		before(function() {
+			return ich.connect()
+		})
+
+		afterEach(function() {
+			ich.connection.db.dropDatabase()
+		})
+
+		it('should create a meta collection with initial data if it does not exist', function(done) {
+			ich._initMetaCollection()
+				.then(meta => {
+					expect(meta).to.have.property('newDatabase', true)
+					expect(meta).to.have.deep.property('collections.authors.new', true)
+					expect(meta).to.have.deep.property('collections.posts.new', true)
+					done()
+				})
+				.catch(done)
+		})
+
+		it('should should set `newDatabase` to false for an existing meta collection', function(done) {
+			ich._initMetaCollection().then(() => {
+				ich._initMetaCollection()
+					.then(meta => {
+						expect(meta).to.have.property('newDatabase', false)
+						done()
+					})
+					.catch(done)
+			})
+		})
+
+	})
 })
