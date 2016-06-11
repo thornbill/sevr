@@ -17,6 +17,8 @@ const Authentication    = require('./authentication')
 const defaultConfig     = require('./default-config')
 const defaultLogger     = require('./console-logger')
 
+const metaCollectionName = 'ich_meta'
+
 class Ichabod {
 	constructor(config) {
 		this._config = _.mergeWith({}, defaultConfig, config)
@@ -26,6 +28,7 @@ class Ichabod {
 		this._plugins = []
 		this._logger = defaultLogger
 		this._auth = new Authentication(this._config.secret)
+		this._metaTree = {}
 	}
 
 	get config() {
@@ -157,7 +160,6 @@ class Ichabod {
 	 * @private
 	 */
 	_initMetaCollection() {
-		const metaName = 'ich_meta'
 		const db = this._db.db
 		const defaultData = {
 			_id: 0,
@@ -177,14 +179,54 @@ class Ichabod {
 			db.listCollections({}).toArray((err, colls) => {
 				if (err) return rej(err)
 
-				hasMeta = _(colls).map(val => { return val.name }).includes(metaName)
-				metaColl = this._db.collection(metaName)
+				hasMeta = _(colls).map(val => { return val.name }).includes(metaCollectionName)
+				metaColl = this._db.collection(metaCollectionName)
 				updateData = hasMeta ? { newDatabase: false } : defaultData
 
 				metaColl.updateOne({ _id: 0 }, { $set: updateData }, { upsert: true })
 					.then(() => { return metaColl.findOne({ _id: 0 }) })
-					.then(res)
+					.then(meta => {
+						this._metaTree = meta
+						this._addMetaCollectionHooks()
+						res(meta)
+					})
 					.catch(rej)
+			})
+		})
+	}
+
+	/**
+	 * Update the meta collection data
+	 * @param {Object} updateData
+	 * @return {Promise}
+	 * @private
+	 */
+	_updateMetaCollection(updateData) {
+		const metaColl = this._db.collection(metaCollectionName)
+
+		return metaColl.updateOne({ _id: 0 }, { $set: updateData }, { upsert: true })
+			.then(() => { return metaColl.findOne({ _id: 0 }) })
+			.then(meta => {
+				this._metaTree = meta
+				return meta
+			})
+	}
+
+	/**
+	 * Add a post save hook fo each collection
+	 * @private
+	 */
+	_addMetaCollectionHooks() {
+		Object.keys(this.collections).forEach(collName => {
+			const coll = this.collections[collName]
+
+			if (!this._metaTree.collections[collName].new) return
+
+			coll.attachHook('post', 'save', (doc, next) => {
+				this._updateMetaCollection({
+					collections: { [collName]: { new: false } }
+				})
+				next()
 			})
 		})
 	}

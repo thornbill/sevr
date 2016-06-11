@@ -172,6 +172,36 @@ describe('Ichabod', function() {
 					.catch(done)
 			})
 		})
+	})
 
+	describe('_addMetaCollectionHooks', function () {
+		Ichabod._destroyFactory()
+		const ich = new Ichabod(require(paths.config))
+
+		before(function() {
+			return ich.connect()
+		})
+
+		afterEach(function() {
+			delete ich.connection.models['Author']
+			ich.connection.db.dropDatabase()
+		})
+
+		it('should attach a post save hook to each new collection', function() {
+			return ich._initMetaCollection().then(() => {
+				return ich.collections.authors.model.create({
+					name: { first: 'testy', last: 'testerson' },
+					username: 'testUser',
+					email: 'test@testerson.com'
+				}).then(() => {
+					return new Promise(res => {
+						setTimeout(() => {
+							expect(ich._metaTree).to.have.deep.property('collections.authors.new', false)
+							res()
+						}, 500)
+					})
+				})
+			})
+		})
 	})
 })
