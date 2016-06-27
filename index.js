@@ -10,6 +10,7 @@
 const mongoose          = require('mongoose')
 const express           = require('express')
 const _                 = require('lodash')
+const EventEmitter      = require('events').EventEmitter
 const TypeLoader        = require('./lib/type-loader')
 const DefinitionLoader  = require('./lib/definition-loader')
 const CollectionFactory = require('./collection-factory')
@@ -29,6 +30,7 @@ class Ichabod {
 		this._logger = defaultLogger
 		this._auth = new Authentication(this._config.secret)
 		this._metaTree = {}
+		this._events = new EventEmitter()
 	}
 
 	get config() {
@@ -65,6 +67,10 @@ class Ichabod {
 
 	get authentication() {
 		return this._auth
+	}
+
+	get events() {
+		return this._events
 	}
 
 	set logger(logger) {
