@@ -42,7 +42,7 @@ class Authentication {
 	validateCredentials(creds) {
 		return this._collection.read({
 			username: creds.username
-		}, true, true)
+		}, null, true, true)
 		.then(user => {
 			return new Promise((res, rej) => {
 				if (!user) return rej()
