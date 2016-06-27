@@ -3,6 +3,7 @@
 
 const chai            = require('chai')
 const chaiAsPromised  = require('chai-as-promised')
+const spies           = require('chai-spies')
 const mongoose        = require('mongoose')
 const Collection      = require('../../../collection')
 const collectionDefs  = require('../../fixtures/collections')
@@ -40,6 +41,7 @@ const fixtures = {
 }
 
 chai.use(chaiAsPromised)
+chai.use(spies)
 
 describe('Collection', function() {
 
@@ -300,6 +302,50 @@ describe('Collection', function() {
 			expect(collectionWithoutMeta.getMeta('description')).to.be.undefined
 
 			expect(collectionWithoutMeta.meta).to.be.undefined
+		})
+	})
+
+	describe('attachHook', function () {
+		let users
+
+		before(function() {
+			users = new Collection('users', collectionDefs.users, factory)
+		})
+
+		after(function() {
+			delete db.models['User']
+			db.db.dropDatabase()
+		})
+
+		it('should add a pre hook', function() {
+			const hook = chai.spy((next) => { next() })
+
+			users.attachHook('pre', 'save', hook)
+			return users.model.create({
+				username: 'testUser',
+				email: 'test@testerson.com'
+			}).then(() => {
+				expect(hook).to.have.been.called.exactly.once
+			})
+		})
+
+		it('should add a post hook', function() {
+			const hook = chai.spy((doc, next) => { next() })
+
+			users.attachHook('post', 'save', hook)
+			return users.model.create({
+				username: 'testUser',
+				email: 'test@testerson.com'
+			}).then(() => {
+				expect(hook).to.have.been.called.exactly.once
+			})
+		})
+
+		it('should throw an error if `when` is not "pre" or "post"', function() {
+			const hook = chai.spy((doc, next) => { next() })
+			const fn = () => { users.attachHook('foo', 'save', hook) }
+
+			expect(fn).to.throw('Must include "pre" or "post" when attaching a hook')
 		})
 	})
 

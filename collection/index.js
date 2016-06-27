@@ -286,6 +286,20 @@ class Collection {
 	}
 
 	/**
+	 * Attach a hook to the schema
+	 * @param  {String}   when
+	 * @param  {String}   type
+	 * @param  {Function} cb
+	 */
+	attachHook(when, type, cb) {
+		if (when !== 'pre' && when !== 'post') {
+			throw new Error('Must include "pre" or "post" when attaching a hook')
+		}
+
+		this.schema[when].call(this.schema, type, cb)
+	}
+
+	/**
 	 * Check user permissions for type
 	 * @param  {String} user
 	 * @param  {String} type
