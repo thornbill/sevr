@@ -204,6 +204,21 @@ class Collection {
 	}
 
 	/**
+	 * Get the field name used for displaying a refrence field
+	 * @param  {Object} fieldDef
+	 * @return {String}
+	 */
+	static getFieldRefDisplay(fieldDef) {
+		const schemaType = fieldDef.schemaType
+
+		if (Array.isArray(schemaType)) {
+			return schemaType[0].display
+		} else {
+			return schemaType.display
+		}
+	}
+
+	/**
 	 * Return all collection field definitions
 	 * @return {Object}
 	 */
@@ -233,9 +248,47 @@ class Collection {
 
 		if (ref) {
 			field.referenceModel = this._factory.getInstanceWithModel(ref).model
+			field.referenceCollection = this._factory.getInstanceWithModel(ref)
 		}
 
 		return field
+	}
+
+	/**
+	 * Get the available options for all reference fields
+	 * @return {Promise}
+	 */
+	getRefOptions() {
+		const allFields = this.getFields()
+		const refFields = Object.keys(allFields).filter(key => {
+			return allFields[key].hasOwnProperty('referenceCollection')
+		})
+		.reduce((map, key) => {
+			return Object.assign({}, map, {
+				[key]: allFields[key]
+			})
+		}, {})
+
+		let promises = []
+
+		Object.keys(refFields).forEach(key => {
+			const field = refFields[key]
+			const display = Collection.getFieldRefDisplay(field)
+
+			promises.push(new Promise((res, rej) => {
+				field.referenceCollection
+					.read(null, display)
+					.then(docs => {
+						res({
+							field: key,
+							options: docs
+						})
+					})
+					.catch(err => rej(err))
+			}))
+		})
+
+		return Promise.all(promises)
 	}
 
 	/**
