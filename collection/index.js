@@ -307,6 +307,26 @@ class Collection {
 	}
 
 	/**
+	 * Get an array of field types associated with the field
+	 * @param  {String} fieldName
+	 * @return {Array}
+	 */
+	getFieldTypes(fieldName) {
+		if (!this._definition.fields.hasOwnProperty(fieldName)) {
+			return
+		}
+
+		const types = [fieldName]
+		const field = _.assign({}, this._definition.fields[fieldName])
+		const schema = Array.isArray(field.schemaType) ? field.schemaType[0] : field.schemaType
+
+		types.push(schema.name)
+		types.push(schema.type.name.replace(/Schema/, ''))
+
+		return types
+	}
+
+	/**
 	 * Get the meta property, or all meta if no property provided
 	 * @param  {String} [prop]
 	 * @return {*}

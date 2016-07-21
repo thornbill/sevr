@@ -268,6 +268,43 @@ describe('Collection', function() {
 		})
 	})
 
+	describe('getFieldTypes()', function() {
+		let testCollection
+
+		before(function() {
+			testCollection = new Collection('test1', {
+				singular: 'Test1',
+				fields: {
+					field1: {
+						label: 'name',
+						schemaType: { name: 'stringType', type: String }
+					},
+					field2: {
+						label: 'email',
+						schemaType: [{ name: 'emailType', type: mongoose.Schema.Types.String }]
+					}
+				}
+			}, factory)
+		})
+
+		after(function() {
+			delete db.models['Test1']
+		})
+
+		it('should return an array of type values', function() {
+			expect(testCollection.getFieldTypes('field1')).to.eql([
+				'field1',
+				'stringType',
+				'String'
+			])
+			expect(testCollection.getFieldTypes('field2')).to.eql([
+				'field2',
+				'emailType',
+				'String'
+			])
+		})
+	})
+
 	describe('getMeta()', function() {
 		let collectionWithMeta
 		let collectionWithoutMeta
