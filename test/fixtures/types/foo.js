@@ -1,12 +1,12 @@
 'use strict'
 
-module.exports = {
+module.exports = types => ({
 	name: 'foo',
-	type: String,
+	type: types.String,
 	validate: {
 		validator: function(val) {
 			return val === 'foo'
 		},
 		message: '{PATH} must equal foo'
 	}
-}
+})
