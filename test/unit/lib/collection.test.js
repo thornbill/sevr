@@ -282,6 +282,13 @@ describe('Collection', function() {
 					field2: {
 						label: 'email',
 						schemaType: [{ name: 'emailType', type: mongoose.Schema.Types.String }]
+					},
+					field3: {
+						label: 'full name',
+						schemaType: {
+							first: { name: 'text', label: 'First', type: String },
+							last: { name: 'text', label: 'Last', type: String }
+						}
 					}
 				}
 			}, factory)
@@ -301,6 +308,13 @@ describe('Collection', function() {
 				'field2',
 				'emailType',
 				'String'
+			])
+		})
+
+		it('should include "COMPLEX" for fields with nested values', function() {
+			expect(testCollection.getFieldTypes('field3')).to.eql([
+				'field3',
+				'COMPLEX'
 			])
 		})
 	})

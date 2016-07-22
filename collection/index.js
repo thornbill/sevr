@@ -320,8 +320,12 @@ class Collection {
 		const field = _.assign({}, this._definition.fields[fieldName])
 		const schema = Array.isArray(field.schemaType) ? field.schemaType[0] : field.schemaType
 
-		types.push(schema.name)
-		types.push(schema.type.name.replace(/Schema/, ''))
+		if (schema.hasOwnProperty('name')) {
+			types.push(schema.name)
+			types.push(schema.type.name.replace(/Schema/, ''))
+		} else {
+			types.push('COMPLEX')
+		}
 
 		return types
 	}
