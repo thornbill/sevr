@@ -346,7 +346,8 @@ class Collection {
 	 * @return {String}
 	 */
 	getFieldTypeName(fieldName) {
-		const fieldDef = this._definition.fields[fieldName]
+		const fieldsFlat = this.getFields(true)
+		const fieldDef = fieldsFlat[fieldName]
 
 		if (Array.isArray(fieldDef.schemaType)) {
 			return fieldDef.schemaType[0].name
@@ -361,12 +362,14 @@ class Collection {
 	 * @return {Array}
 	 */
 	getFieldTypes(fieldName) {
-		if (!this._definition.fields.hasOwnProperty(fieldName)) {
+		const fieldsFlat = this.getFields(true)
+
+		if (!fieldsFlat.hasOwnProperty(fieldName)) {
 			return
 		}
 
 		const types = [fieldName]
-		const field = _.assign({}, this._definition.fields[fieldName])
+		const field = _.assign({}, fieldsFlat[fieldName])
 		const schema = Array.isArray(field.schemaType) ? field.schemaType[0] : field.schemaType
 
 		if (schema.hasOwnProperty('name')) {
