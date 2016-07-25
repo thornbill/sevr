@@ -25,6 +25,13 @@ const fixtures = {
 						type: mongoose.Schema.Types.ObjectId,
 						ref: 'User'
 					}
+				},
+				'field3': {
+					label: 'name',
+					schemaType: {
+						first: { label: 'first', type: String },
+						last: { label: 'last', type: String }
+					}
 				}
 			}
 		},
@@ -208,6 +215,14 @@ describe('Collection', function() {
 			expect(field).to.be.instanceof(Object)
 			expect(field).to.haveOwnProperty('referenceModel')
 		})
+
+		it('should flatten the field if nested and enabled', function() {
+			const field3 = testCollection.getField('field3', true)
+			expect(field3).to.be.instanceof(Array)
+			expect(field3).to.have.deep.property('[0].name', 'field3.first')
+			expect(field3).to.have.deep.property('[1].name', 'field3.last')
+			expect(field3).to.have.deep.property('[1].flattened', true)
+		})
 	})
 
 	describe('getFields()', function() {
@@ -233,6 +248,73 @@ describe('Collection', function() {
 			expect(fields).to.be.instanceOf(Object)
 			expect(fields).to.haveOwnProperty('field1')
 			expect(fields).to.haveOwnProperty('field2')
+		})
+
+		it('should flatten all nested fields if enabled', function() {
+			const fields = testCollection.getFields(true)
+
+			expect(fields).to.be.instanceOf(Object)
+			expect(fields).to.haveOwnProperty('field1')
+			expect(fields).to.haveOwnProperty('field2')
+
+			expect(fields).to.haveOwnProperty('field3.first')
+			expect(fields).to.haveOwnProperty('field3.last')
+			expect(fields['field3.first']).to.haveOwnProperty('label')
+			expect(fields['field3.first']).to.haveOwnProperty('name')
+			expect(fields['field3.first']).to.haveOwnProperty('schemaType')
+			expect(fields['field3.first']).to.haveOwnProperty('flattened')
+			expect(fields['field3.last']).to.haveOwnProperty('flattened')
+		})
+	})
+
+	describe('inflateFields()', function() {
+		let testCollection
+
+		before(function() {
+			testCollection = new Collection('test1', fixtures.definitions.test1, {
+				getInstanceWithModel: function() {
+					return {
+						model: {}
+					}
+				},
+				connection: factory.connection
+			})
+		})
+
+		after(function() {
+			delete db.models['Test1']
+		})
+
+		it('should expand flattened fields', function() {
+			const fieldsFlat = {
+				'field1': {
+					label: 'Field1',
+					schemaType: { type: String }
+				},
+				'field2': {
+					label: 'Field2',
+					schemaType: {
+						type: mongoose.Schema.Types.ObjectId,
+						ref: 'User'
+					}
+				},
+				'field3.first': {
+					flattened: true,
+					label: 'first',
+					schemaType: { type: String }
+				},
+				'field3.last': {
+					flattened: true,
+					label: 'last',
+					schemaType: { type: String }
+				}
+			}
+			const fieldsExpanded = testCollection.inflateFields(fieldsFlat)
+
+			expect(fieldsExpanded).to.have.deep.property('field1.name', 'field1')
+			expect(fieldsExpanded).to.have.deep.property('field2.name', 'field2')
+			expect(fieldsExpanded).to.have.deep.property('field3.name', 'field3')
+			expect(fieldsExpanded).to.have.deep.property('field3.label', 'name')
 		})
 	})
 

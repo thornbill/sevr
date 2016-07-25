@@ -220,25 +220,62 @@ class Collection {
 
 	/**
 	 * Return all collection field definitions
+	 * @param  {Boolean} [flatten=false]
 	 * @return {Object}
 	 */
-	getFields() {
+	getFields(flatten) {
 		const fields = {}
 
 		_.values(this._definition.fields).forEach(field => {
-			fields[field.name] = this.getField(field.name)
+			let fieldParsed = this.getField(field.name, flatten)
+
+			// Coerce all fields to an array for consistency
+			if (!Array.isArray(fieldParsed)) fieldParsed = [fieldParsed]
+
+			fieldParsed.forEach(subField => {
+				fields[subField.name] = subField
+			})
 		})
 
 		return fields
 	}
 
 	/**
-	 * Return a field from the definition.
-	 * If the field has a ref, add `referenceModel` property
-	 * @param  {String} fieldName
+	 * Inflate fields that have been flattened
+	 * @param  {Object} flattened
 	 * @return {Object}
 	 */
-	getField(fieldName) {
+	inflateFields(flattened) {
+		return Object.keys(flattened)
+			.reduce((prev, key) => {
+				const field = flattened[key]
+
+				if (!field.flattened) return prev.concat(key)
+
+				const parts = key.split('.')
+				const parent = parts[0]
+
+				if (prev.indexOf(parent) < 0) {
+					return prev.concat(parent)
+				} else {
+					return prev
+				}
+			}, [])
+			.reduce((prev, key) => {
+				return Object.assign({}, prev, {
+					[key]: this.getField(key)
+				})
+			}, {})
+	}
+
+	/**
+	 * Return a field from the definition.
+	 * If the field has a ref, add `referenceModel` property
+	 * @param  {String}  fieldName
+	 * @param  {Boolean} [flatten=false]
+	 * @return {Object|Array}
+	 */
+	getField(fieldName, flatten) {
 		if (!this._definition.fields.hasOwnProperty(fieldName)) {
 			return
 		}
@@ -249,6 +286,18 @@ class Collection {
 		if (ref) {
 			field.referenceModel = this._factory.getInstanceWithModel(ref).model
 			field.referenceCollection = this._factory.getInstanceWithModel(ref)
+		} else if (flatten && !field.schemaType.hasOwnProperty('type')) {
+			// Flatten nested field
+			return Object.keys(field.schemaType).map(fieldKey => {
+				const subField = field.schemaType[fieldKey]
+
+				return {
+					label: subField.label,
+					name: `${field.name}.${fieldKey}`,
+					schemaType: { type: subField.type },
+					flattened: true
+				}
+			})
 		}
 
 		return field
