@@ -294,7 +294,7 @@ class Collection {
 		if (ref) {
 			field.referenceModel = this._factory.getInstanceWithModel(ref).model
 			field.referenceCollection = this._factory.getInstanceWithModel(ref)
-		} else if (flatten && !field.schemaType.hasOwnProperty('type')) {
+		} else if (flatten && !Array.isArray(field.schemaType) && !field.schemaType.hasOwnProperty('type')) {
 			// Flatten nested field
 			return Object.keys(field.schemaType).map(fieldKey => {
 				const subField = field.schemaType[fieldKey]
@@ -370,14 +370,20 @@ class Collection {
 	 * @return {Array}
 	 */
 	getFieldTypes(fieldName) {
+		const fields = this._definition.fields
 		const fieldsFlat = this.getFields(true)
+		
+		let field
 
-		if (!fieldsFlat.hasOwnProperty(fieldName)) {
+		if (fields.hasOwnProperty(fieldName)) {
+			field = _.assign({}, fields[fieldName])
+		} else if (fieldsFlat.hasOwnProperty(fieldName)) {
+			field = _.assign({}, fieldsFlat[fieldName])
+		} else {
 			return
 		}
 
 		const types = [fieldName]
-		const field = _.assign({}, fieldsFlat[fieldName])
 		const schema = Array.isArray(field.schemaType) ? field.schemaType[0] : field.schemaType
 
 		if (schema.hasOwnProperty('name')) {

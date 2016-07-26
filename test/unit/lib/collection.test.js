@@ -32,6 +32,10 @@ const fixtures = {
 						first: { label: 'first', type: String },
 						last: { label: 'last', type: String }
 					}
+				},
+				'field4': {
+					label: 'values',
+					schemaType: [{ type: String }]
 				}
 			}
 		},
@@ -222,6 +226,12 @@ describe('Collection', function() {
 			expect(field3).to.have.deep.property('[0].name', 'field3.first')
 			expect(field3).to.have.deep.property('[1].name', 'field3.last')
 			expect(field3).to.have.deep.property('[1].flattened', true)
+		})
+
+		it('should not flatten fields that store arrays of values', function() {
+			const field4 = testCollection.getField('field4', true)
+			expect(field4).to.be.instanceof(Object)
+			expect(field4.name).to.eql('field4')
 		})
 	})
 
