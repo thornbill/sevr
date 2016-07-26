@@ -438,6 +438,47 @@ describe('Collection', function() {
 		})
 	})
 
+	describe('defaultField()', function() {
+		let testCollection1
+		let testCollection2
+
+		before(function() {
+			testCollection1 = new Collection('test1', {
+				singular: 'Test1',
+				fields: {
+					name: {
+						label: 'name',
+						schemaType: { name: 'stringType', type: String }
+					}
+				},
+				defaultField: 'name'
+			}, factory)
+
+			testCollection2 = new Collection('test2', {
+				singular: 'Test2',
+				fields: {
+					email: {
+						label: 'email',
+						schemaType: { name: 'stringType', type: String }
+					}
+				}
+			}, factory)
+		})
+
+		after(function() {
+			delete db.models['Test1']
+			delete db.models['Test2']
+		})
+
+		it('should return the definition property `defaultField` if present', function() {
+			expect(testCollection1.defaultField).to.eql('name')
+		})
+
+		it('should return `_id` if `defaultField` is not defined', function() {
+			expect(testCollection2.defaultField).to.eql('_id')
+		})
+	})
+
 	describe('attachHook', function () {
 		let users
 

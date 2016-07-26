@@ -188,6 +188,14 @@ class Collection {
 		return this.getMeta()
 	}
 
+	get defaultField() {
+		if (this._definition.hasOwnProperty('defaultField')) {
+			return this._definition.defaultField
+		} else {
+			return '_id'
+		}
+	}
+
 	/**
 	 * Get the field ref
 	 * @param  {Object} fieldDef
