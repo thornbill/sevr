@@ -116,6 +116,7 @@ class Ichabod {
 			this._db.once('open', () => {
 				this._collectionFactory = new CollectionFactory(this._definitions, this._db)
 				this._initPlugins()
+				this.events.emit('db-ready')
 				res()
 			})
 		})

@@ -91,6 +91,20 @@ describe('Ichabod', function() {
 			result.then(done).catch(done)
 		})
 
+		it('should emit "db-ready" when connection successful', function(done) {
+			const ich = new Ichabod(require(paths.config))
+			const result = ich.connect()
+			const spy = chai.spy()
+			ich.events.on('db-ready', spy)
+
+			result
+				.then(() => {
+					expect(spy).to.have.been.called.once
+					done()
+				})
+				.catch(done)
+		})
+
 		it('should reject with bad connection', function(done) {
 			const ich = new Ichabod(
 				_.merge({}, require(paths.config), {
