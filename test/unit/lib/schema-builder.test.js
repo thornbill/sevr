@@ -27,6 +27,29 @@ describe('SchemaBuilder', () => {
 			expect(schema.path('visible').selected).to.be.undefined
 			expect(schema.path('hidden').selected).to.be.false
 		})
+
+		it('should add any virtuals', function() {
+			const schema = SchemaBuilder.create({
+				singular: 'User',
+				fields: {
+					name: {
+						label: 'Name',
+						schemaType: {
+							first: String,
+							last: String
+						}
+					}
+				},
+				virtuals: {
+					'name.full': {
+						get: function() { return this.name.first + ' ' + this.name.last }
+					}
+				}
+			})
+
+			expect(schema.virtualpath('name.full')).to.be.an('object')
+			expect(schema.virtualpath('name.full').getters).to.have.length(1)
+		})
 	})
 
 })
