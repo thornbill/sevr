@@ -2,16 +2,14 @@
 
 ---
 
-## Vision
-
-+ Flexibility
-+ Scalability
-+ Security
-+ Developer Happiness
+Ichabod is modern Node.js framework for building custom content management
+systems. 
 
 ---
 
-## Flexible
+## Vision
+
+### Flexible
 
 The Ichabod CMS Framework should be built atop a flexible and modular
 architecture. The core framework should provide a base set of required
@@ -19,35 +17,27 @@ functionality, while Node.JS modules should be used to extend the core set of
 features offered by the CMS. By doing so, a custom CMS can be delivered to meet
 the exact needs of the business.
 
-## Scalability
+### Scalability
 
 Many content management systems are used to deliver high volumes of data to a
 multitude of clients. A modern CMS should be built to scale, offering consistent
 and reliable access.
 
-## Secure
+### Secure
 
 Security is a common concern with content management systems, and for good
 reason. Both the integrity of the content being managed, as well as the access
 to it are essential for many businesses. As such, the Ichabod CMS Framework
-should be built with security in mind at every layer, from frontend to system
+should be built with security in mind at every layer, from frontend to the core
 architecture.
 
-## Developer Happiness
+### Developer Happiness
 
 Off the shelf content management solutions tend to be frustrating from a
 development standpoint. Developing themes and plugins around a CMS to get a base
 set of desired functionality is frustrating. Developers should have the freedom
 to develop a solution that meets their needs, not developing extensions that
 meet the many needs of the platform.
-
----
-
-## The Promise
-
-The Ichabod CMS Framework must remain small and focused on the primary goal of
-creating a flexible and modular framework. Therefore, every function, feature,
-commit, and supporting module should be in direct support of the project vision.
 
 ---
 
@@ -78,3 +68,9 @@ of a low-latency request/response cycle. However, if JavaScript and Node.JS
 aren't your forte, the core framework can be used to simply model and serve
 the CMS data with little knowledge of JavaScript. By adding a RESTful API, you
 can develop the CMS admin interface and consuming resource using any technology.
+
+---
+
+## License
+
+This project is licensed under the [MIT license](license.txt).
