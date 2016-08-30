@@ -17,11 +17,6 @@ const requiredProperties = {
 	]
 }
 
-const defaultPermissions = {
-	read: '*',
-	write: '*'
-}
-
 mongoose.Promise = global.Promise
 
 class Collection {
@@ -36,9 +31,6 @@ class Collection {
 		Object.keys(this._definition.fields).forEach(key => {
 			this._definition.fields[key].name = key
 		})
-
-		// Add default permissions
-		this._permissions = _.assign({}, defaultPermissions, this._definition.permissions)
 
 		// Check for required properties
 		if (!this._definition.hasOwnProperty('singular')) {
@@ -441,27 +433,6 @@ class Collection {
 		}
 
 		this.schema[when].call(this.schema, type, cb)
-	}
-
-	/**
-	 * Check user permissions for type
-	 * @param  {String} user
-	 * @param  {String} type
-	 * @return {Boolean}
-	 * @private
-	 */
-	_checkPermission(user, type) {
-		if (this._permissions[type] == '*') {
-			return true
-		}
-
-		let readPermission = this._permissions[type]
-
-		if (!Array.isArray(readPermission)) {
-			readPermission = [readPermission]
-		}
-
-		return readPermission.indexOf(user) != -1
 	}
 
 	/**

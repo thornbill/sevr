@@ -544,64 +544,6 @@ describe('Collection', function() {
 		})
 	})
 
-	describe('canUserRead()', function() {
-		let usersCollection
-		let postsCollection
-
-		before(function() {
-			usersCollection = new Collection('users', collectionDefs.users, factory)
-			postsCollection = new Collection('posts', collectionDefs.posts, factory)
-		})
-
-		after(function() {
-			delete db.models['User']
-			delete db.models['Post']
-			db.db.dropDatabase()
-		})
-
-		it('should return true if read permission matches user', function() {
-			expect(usersCollection.canUserRead('admin')).to.be.true
-		})
-
-		it('should return true if read permission is wildcard', function() {
-			expect(postsCollection.canUserRead('admin')).to.be.true
-		})
-
-		it('should return false if read permission does not match user', function() {
-			expect(usersCollection.canUserRead('pete')).to.be.false
-		})
-	})
-
-	describe('userCanWrite()', function() {
-		let usersCollection
-		let postsCollection
-		let tagsCollection
-
-		before(function() {
-			usersCollection = new Collection('users', collectionDefs.users, factory)
-			postsCollection = new Collection('posts', collectionDefs.posts, factory)
-			tagsCollection = new Collection('tags', collectionDefs.tags, factory)
-		})
-
-		after(function() {
-			db.db.dropDatabase()
-		})
-
-		it('should return true if write permission matches user', function() {
-			expect(usersCollection.canUserWrite('admin')).to.be.true
-			expect(tagsCollection.canUserWrite('author')).to.be.true
-		})
-
-		it('should return true if write permission is wildcard', function() {
-			expect(postsCollection.canUserWrite('admin')).to.be.true
-		})
-
-		it('should return false if write permission does not match user', function() {
-			expect(usersCollection.canUserWrite('pete')).to.be.false
-			expect(tagsCollection.canUserWrite('contributor')).to.be.false
-		})
-	})
-
 	describe('CRUD operations', function() {
 		let usersCollection
 		let postsCollection
