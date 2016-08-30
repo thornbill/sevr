@@ -4,6 +4,7 @@ const format        = require('util').format
 const _             = require('lodash')
 const mongoose      = require('mongoose')
 const SchemaBuilder = require('../lib/schema-builder')
+const ModelFactory  = require('../lib/model-factory')()
 
 const requiredProperties = {
 	base: [
@@ -48,9 +49,9 @@ class Collection {
 		try {
 			// Do not attempt to recreate the model if it already exists
 			if (!this._connection.models.hasOwnProperty(this._definition.singular)) {
-				this._model = this._connection.model(this._definition.singular, SchemaBuilder.create(this._definition))
+				this._model = ModelFactory.create(this._connection.model(this._definition.singular, SchemaBuilder.create(this._definition)))
 			} else {
-				this._model = this._connection.models[this._definition.singular]
+				this._model = ModelFactory.create(this._connection.models[this._definition.singular])
 			}
 		} catch (err) {
 			throw new Error(format('Failed to create collection `%s`:', this._name, err))
@@ -372,7 +373,7 @@ class Collection {
 	getFieldTypes(fieldName) {
 		const fields = this._definition.fields
 		const fieldsFlat = this.getFields(true)
-		
+
 		let field
 
 		if (fields.hasOwnProperty(fieldName)) {

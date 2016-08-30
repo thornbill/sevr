@@ -8,6 +8,7 @@ const mongoose        = require('mongoose')
 const Collection      = require('../../../collection')
 const collectionDefs  = require('../../fixtures/collections')
 const config          = require('../../fixtures/ichabod-config')
+const ModelFactory    = require('../../../lib/model-factory')()
 
 const expect = chai.expect
 const fixtures = {
@@ -79,6 +80,7 @@ describe('Collection', function() {
 
 		after(function() {
 			delete db.models['Test1']
+			db.db.dropDatabase()
 		})
 
 		it('should set the collection name', function() {
@@ -207,6 +209,7 @@ describe('Collection', function() {
 
 		after(function() {
 			delete db.models['Test1']
+			db.db.dropDatabase()
 		})
 
 		it('should return a field object', function() {
@@ -251,6 +254,7 @@ describe('Collection', function() {
 
 		after(function() {
 			delete db.models['Test1']
+			db.db.dropDatabase()
 		})
 
 		it('should return all field definitions', function() {
@@ -293,6 +297,7 @@ describe('Collection', function() {
 
 		after(function() {
 			delete db.models['Test1']
+			db.db.dropDatabase()
 		})
 
 		it('should expand flattened fields', function() {
@@ -349,6 +354,7 @@ describe('Collection', function() {
 
 		after(function() {
 			delete db.models['Test1']
+			db.db.dropDatabase()
 		})
 
 		it('should return the type name if schemaType is object', function() {
@@ -388,6 +394,7 @@ describe('Collection', function() {
 
 		after(function() {
 			delete db.models['Test1']
+			db.db.dropDatabase()
 		})
 
 		it('should return an array of type values', function() {
@@ -421,6 +428,8 @@ describe('Collection', function() {
 		})
 
 		after(function() {
+			delete db.models['User']
+			delete db.models['Post']
 			db.db.dropDatabase()
 		})
 
@@ -478,6 +487,7 @@ describe('Collection', function() {
 		after(function() {
 			delete db.models['Test1']
 			delete db.models['Test2']
+			db.db.dropDatabase()
 		})
 
 		it('should return the definition property `defaultField` if present', function() {
@@ -493,6 +503,7 @@ describe('Collection', function() {
 		let users
 
 		before(function() {
+			// ModelFactory.flush()
 			users = new Collection('users', collectionDefs.users, factory)
 		})
 
@@ -543,6 +554,8 @@ describe('Collection', function() {
 		})
 
 		after(function() {
+			delete db.models['User']
+			delete db.models['Post']
 			db.db.dropDatabase()
 		})
 
@@ -618,6 +631,8 @@ describe('Collection', function() {
 		})
 
 		after(function() {
+			delete db.models['User']
+			delete db.models['Post']
 			db.db.dropDatabase()
 		})
 
@@ -632,6 +647,10 @@ describe('Collection', function() {
 					postId = doc._id
 					done(err)
 				})
+			})
+
+			after(function() {
+				db.db.dropDatabase()
 			})
 
 			it('should return a promise', function() {
@@ -789,7 +808,7 @@ describe('Collection', function() {
 			})
 
 			after(function() {
-				db.db.dropCollection('posts')
+				db.db.dropDatabase()
 			})
 
 			it('should return a promise', function() {
@@ -841,7 +860,7 @@ describe('Collection', function() {
 			})
 
 			after(function() {
-				db.db.dropCollection('posts')
+				db.db.dropDatabase()
 			})
 
 			it('should return a promise', function() {
@@ -886,7 +905,7 @@ describe('Collection', function() {
 			})
 
 			after(function() {
-				db.db.dropCollection('posts')
+				db.db.dropDatabase()
 			})
 
 			it('should return a promise', function() {

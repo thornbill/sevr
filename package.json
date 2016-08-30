@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "description": "Core module of the Ichabod CMS Framework",
   "keywords": [
-      "cms",
-      "mongo",
-      "express",
-      "content management",
-      "mongoose",
-      "web framework"
+    "cms",
+    "mongo",
+    "express",
+    "content management",
+    "mongoose",
+    "web framework"
   ],
   "main": "index.js",
   "directories": {
@@ -29,7 +29,7 @@
     "express": "^4.13.4",
     "jsonwebtoken": "^5.7.0",
     "lodash": "^4.10.0",
-    "mongoose": "^4.4.12",
+    "mongoose": "^4.5.10",
     "require-all": "^2.0.0"
   },
   "devDependencies": {
