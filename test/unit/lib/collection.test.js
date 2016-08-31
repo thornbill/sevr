@@ -100,13 +100,6 @@ describe('Collection', function() {
 			expect(populationFields).to.be.instanceof(Array)
 			expect(populationFields).to.eql(['field2'])
 		})
-
-		it('should set the default read/write permissions to *', function() {
-			expect(testCollection._permissions).to.eql({
-				read: '*',
-				write: '*'
-			})
-		})
 	})
 
 	describe('isValidDefinition()', function() {
