@@ -2,6 +2,7 @@
 
 const bcrypt = require('bcryptjs')
 const jwt    = require('jsonwebtoken')
+const Errors = require('../errors')
 
 class Authentication {
 	constructor(tokenSecret) {
@@ -55,12 +56,11 @@ class Authentication {
 		}, ['+password'], true, true)
 		.then(user => {
 			return new Promise((res, rej) => {
-				if (!user) return rej()
+				if (!user) return rej(new Errors.AuthError('Invalid credentials'))
 
 				bcrypt.compare(creds.password, user.password, (err, valid) => {
-					if (err || !valid) {
-						return rej()
-					}
+					if (err) return rej(err)
+					if (!valid) return rej(new Errors.AuthError('Invalid credentials'))
 
 					this._user = user
 					res(user)
