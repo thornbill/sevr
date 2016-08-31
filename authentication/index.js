@@ -8,6 +8,7 @@ class Authentication {
 		this._enabled = false
 		this._collection = undefined
 		this._tokenSecret = tokenSecret
+		this._user = null
 	}
 
 	get isEnabled() {
@@ -16,6 +17,15 @@ class Authentication {
 
 	get collection() {
 		return this._collection
+	}
+
+	get user() {
+		return this._user
+	}
+
+	invalidate() {
+		this._user = null
+		return this
 	}
 
 	/**
@@ -52,6 +62,7 @@ class Authentication {
 						return rej()
 					}
 
+					this._user = user
 					res(user)
 				})
 			})
@@ -90,6 +101,7 @@ class Authentication {
 					return rej(err)
 				}
 
+				this._user = user
 				res(user)
 			})
 		})
