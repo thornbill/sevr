@@ -436,21 +436,25 @@ class Collection {
 	}
 
 	/**
-	 * Does the user have read permissions to the collection
-	 * @param  {String} user
-	 * @return {Boolean}
+	 * Add `before` middleware for query operation
+	 * @param   {String}     op
+	 * @param   {Function}   fn
+	 * @returns {Collection}
 	 */
-	canUserRead(user) {
-		return this._checkPermission(user, 'read')
+	useBefore(op, fn) {
+		this.model.useBefore(op, fn)
+		return this
 	}
 
 	/**
-	 * Does the user have read permissions to the collection
-	 * @param  {String} user
-	 * @return {Boolean}
+	 * Add `after` middleware for query operation
+	 * @param   {String}     op
+	 * @param   {Function}   fn
+	 * @returns {Collection}
 	 */
-	canUserWrite(user) {
-		return this._checkPermission(user, 'write')
+	useAfter(op, fn) {
+		this.model.useAfter(op, fn)
+		return this
 	}
 
 
