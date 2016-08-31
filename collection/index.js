@@ -566,26 +566,16 @@ class Collection {
 			})
 		})
 		// Drop the collection if it exists
-		.then((hasCollection) => {
+		.then(hasCollection => {
 			if (hasCollection) {
-				return new Promise((res, rej) => {
-					this._connection.db.dropCollection(self.name, (err) => {
-						if (err) return rej(err)
-						res()
-					})
-				})
+				return self.model.remove({}).exec()
 			} else {
 				return
 			}
 		})
 		// Insert the new documents
 		.then(() => {
-			return new Promise((res, rej) => {
-				self.model.insertMany(docs, (err, docs) => {
-					if (err) return rej(err)
-					res(docs)
-				})
-			})
+			return self.model.insertMany(docs)
 		})
 	}
 
