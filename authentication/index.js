@@ -24,6 +24,12 @@ class Authentication {
 		return this._user
 	}
 
+	set user(userDoc) {
+		const user = userDoc.toObject({ getters: true, setters: true })
+		delete user.password
+		this._user = user
+	}
+
 	invalidate() {
 		this._user = null
 		return this
@@ -62,8 +68,8 @@ class Authentication {
 					if (err) return rej(err)
 					if (!valid) return rej(new Errors.AuthError('Invalid credentials'))
 
-					this._user = user
-					res(user)
+					this.user = user
+					res(this.user)
 				})
 			})
 		})
@@ -101,8 +107,8 @@ class Authentication {
 					return rej(err)
 				}
 
-				this._user = user
-				res(user)
+				this.user = user
+				res(this.user)
 			})
 		})
 	}
