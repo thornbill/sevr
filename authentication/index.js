@@ -1,8 +1,9 @@
 'use strict'
 
-const bcrypt = require('bcryptjs')
-const jwt    = require('jsonwebtoken')
-const Errors = require('../errors')
+const bcrypt       = require('bcryptjs')
+const jwt          = require('jsonwebtoken')
+const EventEmitter = require('events').EventEmitter
+const Errors       = require('../errors')
 
 class Authentication {
 	constructor(tokenSecret) {
@@ -10,6 +11,7 @@ class Authentication {
 		this._collection = undefined
 		this._tokenSecret = tokenSecret
 		this._user = null
+		this._events = new EventEmitter()
 	}
 
 	get isEnabled() {
@@ -18,6 +20,10 @@ class Authentication {
 
 	get collection() {
 		return this._collection
+	}
+
+	get events() {
+		return this._events
 	}
 
 	get user() {
@@ -48,6 +54,7 @@ class Authentication {
 		this._collection = coll
 		this._collection.extendFieldSchema('password', 'set', Authentication._setPassword)
 		this._enabled = true
+		this.events.emit('auth-enabled')
 	}
 
 	/**
