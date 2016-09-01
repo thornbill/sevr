@@ -17,6 +17,9 @@ const CollectionFactory = require('./collection-factory')
 const Authentication    = require('./authentication')
 const defaultConfig     = require('./default-config')
 const defaultLogger     = require('./console-logger')
+const Errors            = require('./errors')
+
+global.$logger = defaultLogger
 
 const metaCollectionName = 'ich_meta'
 
@@ -27,7 +30,6 @@ class Ichabod {
 		this._definitions = DefinitionLoader(this.config.collections, this.types)
 		this._server = express()
 		this._plugins = []
-		this._logger = defaultLogger
 		this._auth = new Authentication(this._config.secret)
 		this._metaTree = {}
 		this._events = new EventEmitter()
@@ -62,7 +64,7 @@ class Ichabod {
 	}
 
 	get logger() {
-		return this._logger
+		return Ichabod.logger
 	}
 
 	get authentication() {
@@ -73,14 +75,15 @@ class Ichabod {
 		return this._events
 	}
 
-	set logger(logger) {
+	static setLogger(logger) {
 		['verbose', 'info', 'warning', 'error', 'critical'].forEach((type, i, all) => {
 			if (!logger.hasOwnProperty(type)) {
 				throw new Error(`Logger must have all methods: ${all.join(', ')}`)
 			}
 		})
 
-		this._logger = logger
+		Ichabod.logger = logger
+		global.$logger = logger
 	}
 
 	/**
@@ -133,7 +136,7 @@ class Ichabod {
 			this._server.listen(serverConfig.port, serverConfig.host, (err) => {
 				if (err) return rej(err)
 
-				this._logger.info(`Ichabod listening on ${serverConfig.host}:${serverConfig.port}`)
+				Ichabod.logger.info(`Ichabod listening on ${serverConfig.host}:${serverConfig.port}`)
 				res()
 			})
 		})
@@ -238,5 +241,8 @@ class Ichabod {
 		})
 	}
 }
+
+Ichabod.logger = defaultLogger
+Ichabod.Errors = Errors
 
 module.exports = Ichabod
