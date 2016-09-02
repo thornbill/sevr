@@ -430,6 +430,7 @@ class Collection {
 	 */
 	addField(name, label, schemaType) {
 		this._definition.fields[name] = {
+			name: name,
 			label: label,
 			schemaType: schemaType
 		}
