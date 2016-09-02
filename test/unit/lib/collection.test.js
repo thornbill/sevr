@@ -619,10 +619,6 @@ describe('Collection', function() {
 				})
 			})
 
-			after(function() {
-				db.db.dropDatabase()
-			})
-
 			it('should return a promise', function() {
 				expect(usersCollection.readById(12345)).to.be.instanceof(Promise)
 			})
@@ -777,10 +773,6 @@ describe('Collection', function() {
 				})
 			})
 
-			after(function() {
-				db.db.dropDatabase()
-			})
-
 			it('should return a promise', function() {
 				const result = postsCollection.updateById(updateId, {
 					content: 'test1'
@@ -829,10 +821,6 @@ describe('Collection', function() {
 				})
 			})
 
-			after(function() {
-				db.db.dropDatabase()
-			})
-
 			it('should return a promise', function() {
 				const result = postsCollection.del()
 
@@ -872,10 +860,6 @@ describe('Collection', function() {
 					deleteId = doc._id
 					done(err)
 				})
-			})
-
-			after(function() {
-				db.db.dropDatabase()
 			})
 
 			it('should return a promise', function() {
