@@ -31,7 +31,14 @@ class Authentication {
 	}
 
 	set user(userDoc) {
-		const user = userDoc.toObject({ getters: true, setters: true })
+		let user
+
+		if (typeof userDoc.toObject === 'function') {
+			user = userDoc.toObject({ getters: true, setters: true })
+		} else {
+			user = userDoc
+		}
+
 		delete user.password
 		this._user = user
 	}

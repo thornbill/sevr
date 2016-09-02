@@ -82,12 +82,21 @@ describe('Authentication', function() {
 	describe('validateCredentials()', function() {
 
 		afterEach(() => {
-			return authCollection.model.remove({})
+			delete db.models['Auth']
+			db.db.dropDatabase()
 		})
 
 		it('should return a promise', function() {
+			const coll = new Collection('auth', {
+				singular: 'Auth',
+				fields: {
+					username: { label: 'username', schemaType: String },
+					password: { label: 'password', schemaType: String }
+				}
+			}, factory)
 			const auth = new Authentication()
-			auth.enable(authCollection)
+			auth.enable(coll)
+
 			expect(auth.validateCredentials({
 				username: 'foo',
 				password: 'bar'
@@ -95,40 +104,64 @@ describe('Authentication', function() {
 		})
 
 		it('should resolve with the matching user document', function(done) {
+			const coll = new Collection('auth', {
+				singular: 'Auth',
+				fields: {
+					username: { label: 'username', schemaType: String },
+					password: { label: 'password', schemaType: String }
+				}
+			}, factory)
 			const auth = new Authentication()
-			auth.enable(authCollection)
+			auth.enable(coll)
 
-			authCollection.model.create({
+			coll.model.create({
 				username: 'validateTest',
 				password: 'validate_me'
 			})
 			.then(user => {
-				return auth.validateCredentials(user)
+				return auth.validateCredentials({
+					username: 'validateTest',
+					password: 'validate_me'
+				})
 			})
 			.then(user => {
-				expect(user).to.have.deepProperty('username', 'validateTest')
+				expect(user).to.have.deep.property('username', 'validateTest')
 				done()
 			})
 			.catch(done)
 		})
 
 		it('should reject when no user is found', function(done) {
+			const coll = new Collection('auth', {
+				singular: 'Auth',
+				fields: {
+					username: { label: 'username', schemaType: String },
+					password: { label: 'password', schemaType: String }
+				}
+			}, factory)
 			const auth = new Authentication()
-			auth.enable(authCollection)
+			auth.enable(coll)
 
-			auth.validateCredentials({
+			return auth.validateCredentials({
 				username: 'doesnotexist',
 				password: 'bad_pass'
 			})
 			.then(done)
-			.catch(done)
+			.catch(() => { done() })
 		})
 
 		it('should reject when password does not match', function(done) {
+			const coll = new Collection('auth', {
+				singular: 'Auth',
+				fields: {
+					username: { label: 'username', schemaType: String },
+					password: { label: 'password', schemaType: String }
+				}
+			}, factory)
 			const auth = new Authentication()
-			auth.enable(authCollection)
+			auth.enable(coll)
 
-			authCollection.model.create({
+			coll.model.create({
 				username: 'validateTest',
 				password: 'validate_me'
 			})
@@ -139,7 +172,7 @@ describe('Authentication', function() {
 				})
 			})
 			.then(done)
-			.catch(done)
+			.catch(() => { done() })
 		})
 
 	})
