@@ -60,6 +60,7 @@ class Authentication {
 
 		this._collection = coll
 		this._collection.extendFieldSchema('password', 'set', Authentication._setPassword)
+		this._collection.extendFieldSchema('password', 'select', false)
 		this._enabled = true
 		this.events.emit('auth-enabled')
 	}
