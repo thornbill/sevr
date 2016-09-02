@@ -52,4 +52,24 @@ describe('SchemaBuilder', () => {
 		})
 	})
 
+	describe('addPath()', function() {
+		it('should add a new path to an existing schema', function() {
+			const schema = SchemaBuilder.create({
+				singular: 'User',
+				fields: {
+					name: {
+						label: 'Name',
+						schemaType: {
+							first: String,
+							last: String
+						}
+					}
+				}
+			})
+
+			SchemaBuilder.addPath('username', { type: String, required: true}, schema)
+			expect(schema.path('username')).to.not.be.undefined
+		})
+	})
+
 })

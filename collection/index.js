@@ -422,6 +422,24 @@ class Collection {
 	}
 
 	/**
+	 * Add a field to the collection definition
+	 * @param {String} name
+	 * @param {String} label
+	 * @param {*}      schemaType
+	 * @returns this
+	 */
+	addField(name, label, schemaType) {
+		this._definition.fields[name] = {
+			label: label,
+			schemaType: schemaType
+		}
+
+		SchemaBuilder.addPath(name, schemaType, this.schema)
+
+		return this
+	}
+
+	/**
 	 * Attach a hook to the schema
 	 * @param  {String}   when
 	 * @param  {String}   type

@@ -492,6 +492,41 @@ describe('Collection', function() {
 		})
 	})
 
+	describe.only('addField()', function() {
+		let coll
+
+		before(function() {
+			coll = new Collection('coll', {
+				singular: 'Collection',
+				fields: {
+					field1: {
+						label: 'Field1',
+						schemaType: String
+					}
+				}
+			}, factory)
+		})
+
+		after(function() {
+			delete db.models['Collection']
+			db.db.dropDatabase()
+		})
+
+		it('should add a new path to the schema', function() {
+			coll.addField('field2', 'Field2', String)
+
+			expect(coll.schema.path('field2')).to.not.be.undefined
+		})
+
+		it('should add a field to the collection definition', function() {
+			coll.addField('field2', 'Field2', String)
+
+			expect(coll.definition).to.have.deep.property('fields.field2')
+			expect(coll.definition.fields.field2).to.have.property('label', 'Field2')
+			expect(coll.definition.fields.field2).to.have.property('schemaType', String)
+		})
+	})
+
 	describe('attachHook', function () {
 		let users
 
