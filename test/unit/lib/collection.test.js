@@ -492,7 +492,7 @@ describe('Collection', function() {
 		})
 	})
 
-	describe.only('addField()', function() {
+	describe('addField()', function() {
 		let coll
 
 		before(function() {
