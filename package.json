@@ -1,8 +1,7 @@
 {
   "name": "sevr",
   "version": "0.1.0",
-  "description": "A modern framework for building custom content management
-  systems",
+  "description": "A modern framework for building custom content management systems",
   "keywords": [
     "cms",
     "mongo",
