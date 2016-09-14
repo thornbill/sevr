@@ -4,7 +4,7 @@
 /**
  * Console logger
  * ---
- * Provides simple a universal logger for Ichabod
+ * Provides simple a universal logger for Sevr
  */
 
 const chalk = require('chalk')

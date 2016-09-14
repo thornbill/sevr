@@ -1,9 +1,9 @@
 'use strict'
 
 /**
- * Ichabod
+ * Sevr
  * ---
- * Initialize the ichabod core.
+ * Initialize the sevr core.
  *
  */
 
@@ -23,7 +23,7 @@ global.$logger = defaultLogger
 
 const metaCollectionName = 'ich_meta'
 
-class Ichabod {
+class Sevr {
 	constructor(config) {
 		this._config = _.mergeWith({}, defaultConfig, config)
 		this._types = TypeLoader(this.config.types)
@@ -64,7 +64,7 @@ class Ichabod {
 	}
 
 	get logger() {
-		return Ichabod.logger
+		return Sevr.logger
 	}
 
 	get authentication() {
@@ -82,7 +82,7 @@ class Ichabod {
 			}
 		})
 
-		Ichabod.logger = logger
+		Sevr.logger = logger
 		global.$logger = logger
 	}
 
@@ -136,7 +136,7 @@ class Ichabod {
 			this._server.listen(serverConfig.port, serverConfig.host, (err) => {
 				if (err) return rej(err)
 
-				Ichabod.logger.info(`Ichabod listening on ${serverConfig.host}:${serverConfig.port}`)
+				Sevr.logger.info(`Sevr listening on ${serverConfig.host}:${serverConfig.port}`)
 				res()
 			})
 		})
@@ -242,7 +242,7 @@ class Ichabod {
 	}
 }
 
-Ichabod.logger = defaultLogger
-Ichabod.Errors = Errors
+Sevr.logger = defaultLogger
+Sevr.Errors = Errors
 
-module.exports = Ichabod
+module.exports = Sevr

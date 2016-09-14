@@ -4,23 +4,23 @@
 const chai     = require('chai')
 const _        = require('lodash')
 const spies    = require('chai-spies')
-const Ichabod  = require('../../index')
+const Sevr  = require('../../index')
 
 const expect = chai.expect
 const paths = {
-	config: '../fixtures/ichabod-config'
+	config: '../fixtures/sevr-config'
 }
 
 chai.use(spies)
 
-describe('Ichabod', function() {
+describe('Sevr', function() {
 
 	after(function() {
-		Ichabod._destroyFactory()
+		Sevr._destroyFactory()
 	})
 
 	it('should extend the config', function() {
-		const ich = new Ichabod(require(paths.config))
+		const ich = new Sevr(require(paths.config))
 		expect(ich.config).to.have.property('collections', 'test/fixtures/definitions')
 		expect(ich.config).to.have.property('types', 'test/fixtures/types')
 		expect(ich.config).to.have.deep.property('connection.host', 'localhost')
@@ -28,13 +28,13 @@ describe('Ichabod', function() {
 	})
 
 	it('should load the collection definitions', function() {
-		const ich = new Ichabod(require(paths.config))
+		const ich = new Sevr(require(paths.config))
 		expect(ich.definitions).to.haveOwnProperty('posts')
 		expect(ich.definitions).to.haveOwnProperty('authors')
 	})
 
 	it('should load the type definitions', function() {
-		const ich = new Ichabod(require(paths.config))
+		const ich = new Sevr(require(paths.config))
 		expect(ich.types).to.haveOwnProperty('Email')
 		expect(ich.types).to.haveOwnProperty('Foo')
 	})
@@ -42,7 +42,7 @@ describe('Ichabod', function() {
 	describe('attach()', function() {
 
 		it('should push the plugin to the plugins array', function() {
-			const ich = new Ichabod(require(paths.config))
+			const ich = new Sevr(require(paths.config))
 			const pluginA = () => { return 'a' }
 			const pluginB = () => { return 'b' }
 
@@ -67,7 +67,7 @@ describe('Ichabod', function() {
 		})
 
 		it('should throw an error if the plugin is not a function', function() {
-			const ich = new Ichabod(require(paths.config))
+			const ich = new Sevr(require(paths.config))
 			const badPlugin = { ima: 'not a function' }
 			const fn = () => { ich.attach(badPlugin) }
 
@@ -79,20 +79,20 @@ describe('Ichabod', function() {
 	describe('connect()', function() {
 
 		it('should return a promise', function(done) {
-			const ich = new Ichabod(require(paths.config))
+			const ich = new Sevr(require(paths.config))
 			const result = ich.connect()
 			expect(result).to.be.instanceof(Promise)
 			result.then(done, done)
 		})
 
 		it('should resolve with good connection', function(done) {
-			const ich = new Ichabod(require(paths.config))
+			const ich = new Sevr(require(paths.config))
 			const result = ich.connect()
 			result.then(done).catch(done)
 		})
 
 		it('should emit "db-ready" when connection successful', function(done) {
-			const ich = new Ichabod(require(paths.config))
+			const ich = new Sevr(require(paths.config))
 			const result = ich.connect()
 			const spy = chai.spy()
 			ich.events.on('db-ready', spy)
@@ -106,7 +106,7 @@ describe('Ichabod', function() {
 		})
 
 		it('should reject with bad connection', function(done) {
-			const ich = new Ichabod(
+			const ich = new Sevr(
 				_.merge({}, require(paths.config), {
 					connection: { host: 'foobar', port: 1337 }
 				})
@@ -120,7 +120,7 @@ describe('Ichabod', function() {
 		})
 
 		it('should create the collections', function(done) {
-			const ich = new Ichabod(require(paths.config))
+			const ich = new Sevr(require(paths.config))
 			const result = ich.connect()
 			result.then(() => {
 				expect(ich.collections).to.haveOwnProperty('posts')
@@ -133,8 +133,8 @@ describe('Ichabod', function() {
 
 	describe('_initPlugins()', function() {
 
-		it('should call each plugin function with Ichabod instance and config', function() {
-			const ich = new Ichabod(require(paths.config))
+		it('should call each plugin function with Sevr instance and config', function() {
+			const ich = new Sevr(require(paths.config))
 			const pluginA = chai.spy()
 			const pluginB = chai.spy()
 
@@ -154,8 +154,8 @@ describe('Ichabod', function() {
 
 	describe('_initMetaCollection()', function() {
 
-		Ichabod._destroyFactory()
-		const ich = new Ichabod(require(paths.config))
+		Sevr._destroyFactory()
+		const ich = new Sevr(require(paths.config))
 
 		before(function() {
 			return ich.connect()
@@ -189,8 +189,8 @@ describe('Ichabod', function() {
 	})
 
 	describe('_addMetaCollectionHooks', function () {
-		Ichabod._destroyFactory()
-		const ich = new Ichabod(require(paths.config))
+		Sevr._destroyFactory()
+		const ich = new Sevr(require(paths.config))
 
 		before(function() {
 			return ich.connect()

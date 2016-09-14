@@ -5,7 +5,7 @@ const chai              = require('chai')
 const mongoose          = require('mongoose')
 const Collection        = require('../../../collection')
 const CollectionFactory = require('../../../collection-factory')
-const config            = require('../../fixtures/ichabod-config')
+const config            = require('../../fixtures/sevr-config')
 
 const expect = chai.expect
 

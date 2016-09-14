@@ -8,7 +8,7 @@ const jwt            = require('jsonwebtoken')
 const Authentication = require('../../authentication')
 const Collection     = require('../../collection')
 const collectionDefs = require('../fixtures/collections')
-const config         = require('../fixtures/ichabod-config')
+const config         = require('../fixtures/sevr-config')
 
 const expect = chai.expect
 const secret = 'imasecret'

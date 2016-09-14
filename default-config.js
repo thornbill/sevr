@@ -1,7 +1,7 @@
 'use strict'
 
 /**
- * Default Ichabod Configuration
+ * Default Sevr Configuration
  * ---
  */
 
@@ -15,7 +15,7 @@ module.exports = {
 		port: 27017,
 		username: null,
 		password: null,
-		database: 'ichabod'
+		database: 'sevr'
 	},
 
 	/**

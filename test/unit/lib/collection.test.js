@@ -7,7 +7,7 @@ const spies           = require('chai-spies')
 const mongoose        = require('mongoose')
 const Collection      = require('../../../collection')
 const collectionDefs  = require('../../fixtures/collections')
-const config          = require('../../fixtures/ichabod-config')
+const config          = require('../../fixtures/sevr-config')
 const ModelFactory    = require('../../../lib/model-factory')()
 
 const expect = chai.expect
