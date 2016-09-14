@@ -1,5 +1,7 @@
 # Sevr CMS Framework
 
+[![Build Status](https://travis-ci.org/ExclamationLabs/sevr.svg?branch=master)](https://travis-ci.org/ExclamationLabs/sevr)
+
 Sevr is modern Node.js framework for building custom content management
 systems.
 
