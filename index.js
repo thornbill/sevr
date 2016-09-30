@@ -18,6 +18,7 @@ const Authentication    = require('./authentication')
 const defaultConfig     = require('./default-config')
 const defaultLogger     = require('./console-logger')
 const Errors            = require('./errors')
+const Meta              = require('./lib/meta')
 
 global.$logger = defaultLogger
 
@@ -30,7 +31,7 @@ class Sevr {
 		this._definitions = DefinitionLoader(this.config.collections, this.types)
 		this._server = express()
 		this._plugins = []
-		this._auth = new Authentication(this._config.secret)
+		this._auth = new Authentication(this._config.secret, Meta.getInstance('sevr-auth'))
 		this._metaTree = {}
 		this._events = new EventEmitter()
 	}
@@ -90,16 +91,21 @@ class Sevr {
 	 * Attach a plugin
 	 * @param  {Function} plugin
 	 * @param  {Object} config
+	 * @param  {String} namespace
+	 * @return {Sevr}
 	 */
-	attach(plugin, config) {
+	attach(plugin, config, namespace) {
 		if (typeof plugin !== 'function') {
 			throw new Error('Plugin must be a function')
 		}
 
 		this._plugins.push({
 			fn: plugin,
-			config: config
+			config,
+			namespace
 		})
+
+		return this
 	}
 
 	/**
@@ -157,7 +163,7 @@ class Sevr {
 	 */
 	_initPlugins() {
 		this._plugins.forEach(plugin => {
-			plugin.fn(this, plugin.config)
+			plugin.fn(this, plugin.config, Meta.getInstance(plugin.namespace))
 		})
 	}
 

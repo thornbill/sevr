@@ -1,9 +1,9 @@
 /*eslint-env node, mocha */
 'use strict'
 
-const chai     = require('chai')
-const _        = require('lodash')
-const spies    = require('chai-spies')
+const chai  = require('chai')
+const _     = require('lodash')
+const spies = require('chai-spies')
 const Sevr  = require('../../index')
 
 const expect = chai.expect
@@ -58,11 +58,13 @@ describe('Sevr', function() {
 			expect(ich._plugins).to.have.length(2)
 			expect(ich._plugins[0]).to.eql({
 				fn: pluginA,
-				config: { test: 1 }
+				config: { test: 1 },
+				namespace: undefined
 			})
 			expect(ich._plugins[1]).to.eql({
 				fn: pluginB,
-				config: { test: 2 }
+				config: { test: 2 },
+				namespace: undefined
 			})
 		})
 
@@ -162,7 +164,9 @@ describe('Sevr', function() {
 		})
 
 		afterEach(function() {
-			ich.connection.db.dropDatabase()
+			ich.connection.on('connection', () => {
+				ich.connection.db.dropDatabase()
+			})
 		})
 
 		it('should create a meta collection with initial data if it does not exist', function(done) {
@@ -198,7 +202,9 @@ describe('Sevr', function() {
 
 		afterEach(function() {
 			delete ich.connection.models['Author']
-			ich.connection.db.dropDatabase()
+			ich.connection.on('connection', () => {
+				ich.connection.db.dropDatabase()
+			})
 		})
 
 		it('should attach a post save hook to each new collection', function() {
