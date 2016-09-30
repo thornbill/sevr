@@ -31,9 +31,13 @@ class Sevr {
 		this._definitions = DefinitionLoader(this.config.collections, this.types)
 		this._server = express()
 		this._plugins = []
-		this._auth = new Authentication(this._config.secret, Meta.getInstance('sevr-auth'))
-		this._metaTree = {}
+		this._auth = {}
 		this._events = new EventEmitter()
+
+		Meta.getInstance('sevr-auth')
+			.then(meta => {
+				his._auth = new Authentication(this._config.secret, meta)
+			})
 	}
 
 	get config() {
@@ -125,8 +129,10 @@ class Sevr {
 			this._db.once('open', () => {
 				this._collectionFactory = new CollectionFactory(this._definitions, this._db)
 				this._initPlugins()
-				this.events.emit('db-ready')
-				res()
+					.then(() => {
+						this.events.emit('db-ready')
+						res()
+					})
 			})
 		})
 	}
@@ -159,12 +165,21 @@ class Sevr {
 
 	/**
 	 * Initialize the array of plugins
+	 * @return {Promise}
 	 * @private
 	 */
 	_initPlugins() {
+		const promises = []
 		this._plugins.forEach(plugin => {
-			plugin.fn(this, plugin.config, Meta.getInstance(plugin.namespace))
+			promises.push(
+				Meta.getInstance(plugin.namespace)
+					.then(meta => {
+						plugin.fn(this, plugin.config, meta)
+					})
+			)
 		})
+
+		return Promise.all(promises)
 	}
 }
 

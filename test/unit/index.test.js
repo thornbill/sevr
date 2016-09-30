@@ -146,10 +146,12 @@ describe('Sevr', function() {
 			]
 
 			ich._initPlugins()
-			expect(pluginA).to.have.been.called.once
-			expect(pluginB).to.have.been.called.once
-			expect(pluginA).to.have.been.called.with(ich, { test: 1 })
-			expect(pluginB).to.have.been.called.with(ich, undefined)
+				.then(() => {
+					expect(pluginA).to.have.been.called.once
+					expect(pluginB).to.have.been.called.once
+					expect(pluginA).to.have.been.called.with(ich, { test: 1 })
+					expect(pluginB).to.have.been.called.with(ich, undefined)
+				})
 		})
 
 	})

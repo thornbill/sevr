@@ -14,6 +14,11 @@ const Meta           = require('../../lib/meta')
 const expect = chai.expect
 const secret = 'imasecret'
 
+const metaMock = {
+	get: () => {},
+	put: () => {},
+}
+
 describe('Authentication', function() {
 
 	let db
@@ -39,7 +44,7 @@ describe('Authentication', function() {
 	})
 
 	it('should be disabled by default', function() {
-		const auth = new Authentication('test', Meta.getInstance('auth-meta'))
+		const auth = new Authentication('test', metaMock)
 		expect(auth.isEnabled).to.be.false
 	})
 
@@ -54,27 +59,27 @@ describe('Authentication', function() {
 		})
 
 		it('should enabled authentication', function() {
-			const auth = new Authentication('test', Meta.getInstance('auth-meta'))
+			const auth = new Authentication('test', metaMock)
 			expect(auth.isEnabled).to.be.false
 			auth.enable(authCollection)
 			expect(auth.isEnabled).to.be.true
 		})
 
 		it('sets `coll` to the collection to authenticate against', function() {
-			const auth = new Authentication('test', Meta.getInstance('auth-meta'))
+			const auth = new Authentication('test', metaMock)
 			expect(auth.collection).to.be.undefined
 			auth.enable(authCollection)
 			expect(auth.collection).to.eql(authCollection)
 		})
 
 		it('should error if collection does not have `username` and `password` fields', function() {
-			const auth = new Authentication('test', Meta.getInstance('auth-meta'))
+			const auth = new Authentication('test', metaMock)
 			const fn = () => { auth.enable(authErrorCollection) }
 			expect(fn).to.throw('Authentication collection must have "username" and "password"')
 		})
 
 		it('should add a setter to the `password` field', function() {
-			const auth = new Authentication('test', Meta.getInstance('auth-meta'))
+			const auth = new Authentication('test', metaMock)
 			const schema = authCollection.schema
 			auth.enable(authCollection)
 			expect(schema.path('password').setters[0]).to.be.a('function')
@@ -85,21 +90,42 @@ describe('Authentication', function() {
 		})
 
 		it('should set metadata flag for initial auth enable', function(done) {
-			const auth = new Authentication('test', Meta.getInstance('auth-meta2'))
-			const auth2 = new Authentication('test', Meta.getInstance('auth-meta2'))
+			let auth
+			let auth2
 
-			auth.enable(authCollection)
-				.then(() => {
-					return auth._metadata.get('initialAuthEnable')
+
+			// auth.enable(authCollection)
+			// 	.then(() => {
+			// 		return auth._metadata.get('initialAuthEnable')
+			// 	})
+			// 	.then(val => {
+			// 		expect(val).to.eql(true)
+			// 		return auth2.enable(authCollection)
+			// 	})
+			// 	.then(() => {
+			// 		return auth2._metadata.get('initialAuthEnable')
+			// 	})
+			// 	.then(val => {
+			// 		expect(val).to.eql(false)
+			// 		done()
+			// 	})
+			// 	.catch(done)
+			//
+			Meta.getInstance('auth-meta2')
+				.then(meta => {
+					auth = new Authentication('test', meta)
+					auth2 = new Authentication('test', meta)
 				})
-				.then(val => {
+				.then(() => {
+					return auth.enable(authCollection)
+				})
+				.then(() => {
+					const val = auth._metadata.get('initialAuthEnable')
 					expect(val).to.eql(true)
 					return auth2.enable(authCollection)
 				})
 				.then(() => {
-					return auth2._metadata.get('initialAuthEnable')
-				})
-				.then(val => {
+					const val = auth2._metadata.get('initialAuthEnable')
 					expect(val).to.eql(false)
 					done()
 				})
@@ -123,7 +149,7 @@ describe('Authentication', function() {
 					password: { label: 'password', schemaType: String }
 				}
 			}, factory)
-			const auth = new Authentication('test', Meta.getInstance('auth-meta'))
+			const auth = new Authentication('test', metaMock)
 			auth.enable(coll)
 
 			expect(auth.validateCredentials({
@@ -140,7 +166,7 @@ describe('Authentication', function() {
 					password: { label: 'password', schemaType: String }
 				}
 			}, factory)
-			const auth = new Authentication('test', Meta.getInstance('auth-meta'))
+			const auth = new Authentication('test', metaMock)
 			auth.enable(coll)
 
 			coll.model.create({
@@ -168,7 +194,7 @@ describe('Authentication', function() {
 					password: { label: 'password', schemaType: String }
 				}
 			}, factory)
-			const auth = new Authentication('test', Meta.getInstance('auth-meta'))
+			const auth = new Authentication('test', metaMock)
 			auth.enable(coll)
 
 			return auth.validateCredentials({
@@ -187,7 +213,7 @@ describe('Authentication', function() {
 					password: { label: 'password', schemaType: String }
 				}
 			}, factory)
-			const auth = new Authentication('test', Meta.getInstance('auth-meta'))
+			const auth = new Authentication('test', metaMock)
 			auth.enable(coll)
 
 			coll.model.create({
@@ -213,14 +239,14 @@ describe('Authentication', function() {
 		})
 
 		it('should return a promise', function() {
-			const auth = new Authentication(secret, Meta.getInstance('auth-meta'))
+			const auth = new Authentication(secret, metaMock)
 			auth.enable(authCollection)
 
 			expect(auth.createToken()).to.be.instanceof(Promise)
 		})
 
 		it('should resolve with a jwt', function(done) {
-			const auth = new Authentication(secret, Meta.getInstance('auth-meta'))
+			const auth = new Authentication(secret, metaMock)
 			auth.enable(authCollection)
 
 			authCollection.model.create({
@@ -248,7 +274,7 @@ describe('Authentication', function() {
 		})
 
 		it('should return a promise', function() {
-			const auth = new Authentication(secret, Meta.getInstance('auth-test'))
+			const auth = new Authentication(secret, metaMock)
 			auth.enable(authCollection)
 
 			expect(auth.verifyToken()).to.be.instanceof(Promise)
@@ -256,7 +282,7 @@ describe('Authentication', function() {
 
 		it('should resolve with a user document', function(done) {
 			this.timeout(2500)
-			const auth = new Authentication(secret, Meta.getInstance('auth-test'))
+			const auth = new Authentication(secret, metaMock)
 			auth.enable(authCollection)
 
 			authCollection.model.create({
