@@ -93,6 +93,8 @@ describe('Authentication', function() {
 			let auth
 			let auth2
 
+			Meta.createModel(db)
+
 			Meta.getInstance('auth-meta2')
 				.then(meta => {
 					auth = new Authentication('test', meta)
