@@ -70,15 +70,17 @@ class Authentication {
 		this._collection.extendFieldSchema('password', 'select', false)
 		this._enabled = true
 
-		this.events.emit('auth-enabled')
-
 		const initialAuthEnable = this._metadata.get('initialAuthEnable')
+		let newInitAuthEnable = initialAuthEnable === undefined ? true : false
 
-		if (initialAuthEnable === undefined) {
-			return this._metadata.put('initialAuthEnable', true)
-		} else {
-			return this._metadata.put('initialAuthEnable', false)
-		}
+		return this._metadata.put('initialAuthEnable', newInitAuthEnable)
+			.then(() => {
+				this.events.emit('auth-enabled')
+			})
+			.catch(err => {
+				console.log(err.stack)
+				this.events.emit('auth-enabled')
+			})
 	}
 
 	/**

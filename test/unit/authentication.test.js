@@ -16,7 +16,7 @@ const secret = 'imasecret'
 
 const metaMock = {
 	get: () => {},
-	put: () => {},
+	put: () => { return Promise.resolve() },
 }
 
 describe('Authentication', function() {
