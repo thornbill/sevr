@@ -33,11 +33,6 @@ class Sevr {
 		this._plugins = []
 		this._auth = {}
 		this._events = new EventEmitter()
-
-		Meta.getInstance('sevr-auth')
-			.then(meta => {
-				his._auth = new Authentication(this._config.secret, meta)
-			})
 	}
 
 	get config() {
@@ -128,6 +123,15 @@ class Sevr {
 			this._db.once('error', err => { rej(err) })
 			this._db.once('open', () => {
 				this._collectionFactory = new CollectionFactory(this._definitions, this._db)
+
+				// Setup initial metadata
+				Meta.createModel(this._db)
+				Meta.getInstance('sevr-auth')
+					.then(meta => {
+						this._auth = new Authentication(this._config.secret, meta)
+					})
+
+				// Initialize plugins
 				this._initPlugins()
 					.then(() => {
 						this.events.emit('db-ready')
@@ -172,10 +176,9 @@ class Sevr {
 		const promises = []
 		this._plugins.forEach(plugin => {
 			promises.push(
-				Meta.getInstance(plugin.namespace)
-					.then(meta => {
-						plugin.fn(this, plugin.config, meta)
-					})
+				Meta.getInstance(plugin.namespace).then(meta => {
+					plugin.fn(this, plugin.config, meta)
+				})
 			)
 		})
 

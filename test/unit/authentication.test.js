@@ -93,24 +93,6 @@ describe('Authentication', function() {
 			let auth
 			let auth2
 
-
-			// auth.enable(authCollection)
-			// 	.then(() => {
-			// 		return auth._metadata.get('initialAuthEnable')
-			// 	})
-			// 	.then(val => {
-			// 		expect(val).to.eql(true)
-			// 		return auth2.enable(authCollection)
-			// 	})
-			// 	.then(() => {
-			// 		return auth2._metadata.get('initialAuthEnable')
-			// 	})
-			// 	.then(val => {
-			// 		expect(val).to.eql(false)
-			// 		done()
-			// 	})
-			// 	.catch(done)
-			//
 			Meta.getInstance('auth-meta2')
 				.then(meta => {
 					auth = new Authentication('test', meta)
@@ -120,12 +102,12 @@ describe('Authentication', function() {
 					return auth.enable(authCollection)
 				})
 				.then(() => {
-					const val = auth._metadata.get('initialAuthEnable')
+					const val = auth.isFirstEnable
 					expect(val).to.eql(true)
 					return auth2.enable(authCollection)
 				})
 				.then(() => {
-					const val = auth2._metadata.get('initialAuthEnable')
+					const val = auth2.isFirstEnable
 					expect(val).to.eql(false)
 					done()
 				})

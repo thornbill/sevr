@@ -19,6 +19,10 @@ class Authentication {
 		return this._enabled
 	}
 
+	get isFirstEnable() {
+		return this._metadata.get('initialAuthEnable')
+	}
+
 	get collection() {
 		return this._collection
 	}
@@ -66,17 +70,6 @@ class Authentication {
 		this._collection.extendFieldSchema('password', 'select', false)
 		this._enabled = true
 
-		// return this._metadata.get('initialAuthEnable')
-		// 	.then(value => {
-		// 		if (value === undefined) {
-		// 			return this._metadata.put('initialAuthEnable', true)
-		// 		} else if (value) {
-		// 			return this._metadata.put('initialAuthEnable', false)
-		// 		}
-		// 	})
-		// 	.then(() => {
-		// 		this.events.emit('auth-enabled')
-		// 	})
 		this.events.emit('auth-enabled')
 
 		const initialAuthEnable = this._metadata.get('initialAuthEnable')
