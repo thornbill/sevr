@@ -20,7 +20,7 @@ class Authentication {
 	}
 
 	get isFirstEnable() {
-		return this._metadata.get('initialAuthEnable')
+		return !!this._metadata.get('initialAuthEnable')
 	}
 
 	get collection() {
