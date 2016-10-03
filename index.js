@@ -109,7 +109,7 @@ class Sevr {
 
 	/**
 	 * Connect to the database
-	 * @return {promise}
+	 * @return {Promise}
 	 */
 	connect() {
 		const dbConfig = this._config.connection
@@ -142,8 +142,17 @@ class Sevr {
 	}
 
 	/**
+	 * Wait for the connection to be ready
+	 * @return {Sevr}
+	 */
+	ready(fn) {
+		this.events.on('db-ready', fn)
+		return this
+	}
+
+	/**
 	 * Start the express web server
-	 * @return {Promise} [description]
+	 * @return {Promise}
 	 */
 	startServer() {
 		const serverConfig = this._config.server
