@@ -1,9 +1,9 @@
 /*eslint-env node, mocha */
 'use strict'
 
-const chai     = require('chai')
-const _        = require('lodash')
-const spies    = require('chai-spies')
+const chai  = require('chai')
+const _     = require('lodash')
+const spies = require('chai-spies')
 const Sevr  = require('../../index')
 
 const expect = chai.expect
@@ -58,11 +58,13 @@ describe('Sevr', function() {
 			expect(ich._plugins).to.have.length(2)
 			expect(ich._plugins[0]).to.eql({
 				fn: pluginA,
-				config: { test: 1 }
+				config: { test: 1 },
+				namespace: undefined
 			})
 			expect(ich._plugins[1]).to.eql({
 				fn: pluginB,
-				config: { test: 2 }
+				config: { test: 2 },
+				namespace: undefined
 			})
 		})
 
@@ -144,78 +146,13 @@ describe('Sevr', function() {
 			]
 
 			ich._initPlugins()
-			expect(pluginA).to.have.been.called.once
-			expect(pluginB).to.have.been.called.once
-			expect(pluginA).to.have.been.called.with(ich, { test: 1 })
-			expect(pluginB).to.have.been.called.with(ich, undefined)
-		})
-
-	})
-
-	describe('_initMetaCollection()', function() {
-
-		Sevr._destroyFactory()
-		const ich = new Sevr(require(paths.config))
-
-		before(function() {
-			return ich.connect()
-		})
-
-		afterEach(function() {
-			ich.connection.db.dropDatabase()
-		})
-
-		it('should create a meta collection with initial data if it does not exist', function(done) {
-			ich._initMetaCollection()
-				.then(meta => {
-					expect(meta).to.have.property('newDatabase', true)
-					expect(meta).to.have.deep.property('collections.authors.new', true)
-					expect(meta).to.have.deep.property('collections.posts.new', true)
-					done()
+				.then(() => {
+					expect(pluginA).to.have.been.called.once
+					expect(pluginB).to.have.been.called.once
+					expect(pluginA).to.have.been.called.with(ich, { test: 1 })
+					expect(pluginB).to.have.been.called.with(ich, undefined)
 				})
-				.catch(done)
 		})
 
-		it('should should set `newDatabase` to false for an existing meta collection', function(done) {
-			ich._initMetaCollection().then(() => {
-				ich._initMetaCollection()
-					.then(meta => {
-						expect(meta).to.have.property('newDatabase', false)
-						done()
-					})
-					.catch(done)
-			})
-		})
-	})
-
-	describe('_addMetaCollectionHooks', function () {
-		Sevr._destroyFactory()
-		const ich = new Sevr(require(paths.config))
-
-		before(function() {
-			return ich.connect()
-		})
-
-		afterEach(function() {
-			delete ich.connection.models['Author']
-			ich.connection.db.dropDatabase()
-		})
-
-		it('should attach a post save hook to each new collection', function() {
-			return ich._initMetaCollection().then(() => {
-				return ich.collections.authors.model.create({
-					name: { first: 'testy', last: 'testerson' },
-					username: 'testUser',
-					email: 'test@testerson.com'
-				}).then(() => {
-					return new Promise(res => {
-						setTimeout(() => {
-							expect(ich._metaTree).to.have.deep.property('collections.authors.new', false)
-							res()
-						}, 500)
-					})
-				})
-			})
-		})
 	})
 })

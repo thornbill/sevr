@@ -6,16 +6,21 @@ const EventEmitter = require('events').EventEmitter
 const Errors       = require('../errors')
 
 class Authentication {
-	constructor(tokenSecret) {
+	constructor(tokenSecret, metadata) {
 		this._enabled = false
 		this._collection = undefined
 		this._tokenSecret = tokenSecret
 		this._user = null
 		this._events = new EventEmitter()
+		this._metadata = metadata
 	}
 
 	get isEnabled() {
 		return this._enabled
+	}
+
+	get isFirstEnable() {
+		return !!this._metadata.get('initialAuthEnable')
 	}
 
 	get collection() {
@@ -49,9 +54,11 @@ class Authentication {
 	}
 
 	/**
-	 * Enable authentication and add the
-	 * authentication collection
+	 * Enable authentication and add the authentication collection. Sets
+	 * the `firstEnable` meta key if this is the first time authentication
+	 * has been enabled
 	 * @param  {Collection} coll
+	 * @return {Promise}
 	 */
 	enable(coll) {
 		if (!coll.getField('username') || !coll.getField('password')) {
@@ -62,7 +69,18 @@ class Authentication {
 		this._collection.extendFieldSchema('password', 'set', Authentication._setPassword)
 		this._collection.extendFieldSchema('password', 'select', false)
 		this._enabled = true
-		this.events.emit('auth-enabled')
+
+		const initialAuthEnable = this._metadata.get('initialAuthEnable')
+		let newInitAuthEnable = initialAuthEnable === undefined ? true : false
+
+		return this._metadata.put('initialAuthEnable', newInitAuthEnable)
+			.then(() => {
+				this.events.emit('auth-enabled')
+			})
+			.catch(err => {
+				console.log(err.stack)
+				this.events.emit('auth-enabled')
+			})
 	}
 
 	/**
