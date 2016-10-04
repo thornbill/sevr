@@ -22,8 +22,6 @@ const Meta              = require('./lib/meta')
 
 global.$logger = defaultLogger
 
-const metaCollectionName = 'ich_meta'
-
 class Sevr {
 	constructor(config) {
 		this._config = _.mergeWith({}, defaultConfig, config)
@@ -123,22 +121,32 @@ class Sevr {
 			this._db.once('error', err => { rej(err) })
 			this._db.once('open', () => {
 				this._collectionFactory = new CollectionFactory(this._definitions, this._db)
-
-				// Setup initial metadata
-				Meta.createModel(this._db)
-				Meta.getInstance('sevr-auth')
-					.then(meta => {
-						this._auth = new Authentication(this._config.secret, meta)
-					})
-
-				// Initialize plugins
-				this._initPlugins()
-					.then(() => {
-						this.events.emit('db-ready')
-						res()
-					})
+				this.events.emit('db-ready')
+				res()
 			})
 		})
+		.then(() => {
+			// Setup initial metadata
+			Meta.createModel(this._db)
+
+			return Meta.getInstance('sevr-auth')
+				.then(meta => {
+					this._auth = new Authentication(this._config.secret, meta)
+				})
+		})
+	}
+
+	/**
+	 * Start the Sevr service
+	 * @return {Promise}
+	 */
+	start() {
+		// Initialize plugins
+		return this._initPlugins()
+			.then(() => {
+				this.events.emit('ready')
+			})
+
 	}
 
 	/**
@@ -146,7 +154,7 @@ class Sevr {
 	 * @return {Sevr}
 	 */
 	ready(fn) {
-		this.events.on('db-ready', fn)
+		this.events.on('ready', fn)
 		return this
 	}
 
@@ -165,6 +173,16 @@ class Sevr {
 				res()
 			})
 		})
+	}
+
+	/**
+	 * Trigger a reset
+	 * @return {Sevr}
+	 */
+	reset() {
+		this.events.emit('reset')
+		this.authentication.reset()
+		return this
 	}
 
 	/**
