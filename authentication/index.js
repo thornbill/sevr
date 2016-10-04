@@ -53,6 +53,10 @@ class Authentication {
 		return this
 	}
 
+	reset() {
+		this._metadata.remove('initialAuthEnable')
+	}
+
 	/**
 	 * Enable authentication and add the authentication collection. Sets
 	 * the `firstEnable` meta key if this is the first time authentication
