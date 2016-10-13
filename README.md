@@ -60,10 +60,10 @@ const Sevr = require('sevr')
 const config = {}
 const sevr = new Sevr(config)
 
-// Connect to the database
-sevr.connect()
+// Start it up
+sevr.start()
 	.then(() => {
-		sevr.logger.verbose('Initialized database connection')
+		sevr.logger.verbose('Ch-check it out. Sevr is ready to go!')
 	})
 	.catch(err => {
 		sevr.logger.error(err.stack)
