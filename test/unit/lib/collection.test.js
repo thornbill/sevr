@@ -80,7 +80,6 @@ describe('Collection', function() {
 
 		after(function() {
 			delete db.models['Test1']
-			db.db.dropDatabase()
 		})
 
 		it('should set the collection name', function() {

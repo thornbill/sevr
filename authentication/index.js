@@ -6,16 +6,21 @@ const EventEmitter = require('events').EventEmitter
 const Errors       = require('../errors')
 
 class Authentication {
-	constructor(tokenSecret) {
+	constructor(tokenSecret, metadata) {
 		this._enabled = false
 		this._collection = undefined
 		this._tokenSecret = tokenSecret
 		this._user = null
 		this._events = new EventEmitter()
+		this._metadata = metadata
 	}
 
 	get isEnabled() {
 		return this._enabled
+	}
+
+	get isFirstEnable() {
+		return !!this._metadata.get('initialAuthEnable')
 	}
 
 	get collection() {
@@ -43,15 +48,25 @@ class Authentication {
 		this._user = user
 	}
 
+	setMeta(meta) {
+		this._metadata = meta
+	}
+
 	invalidate() {
 		this._user = null
 		return this
 	}
 
+	reset() {
+		this._metadata.remove('initialAuthEnable')
+	}
+
 	/**
-	 * Enable authentication and add the
-	 * authentication collection
+	 * Enable authentication and add the authentication collection. Sets
+	 * the `firstEnable` meta key if this is the first time authentication
+	 * has been enabled
 	 * @param  {Collection} coll
+	 * @return {Promise}
 	 */
 	enable(coll) {
 		if (!coll.getField('username') || !coll.getField('password')) {
@@ -62,7 +77,23 @@ class Authentication {
 		this._collection.extendFieldSchema('password', 'set', Authentication._setPassword)
 		this._collection.extendFieldSchema('password', 'select', false)
 		this._enabled = true
-		this.events.emit('auth-enabled')
+		
+		this._collection.attachHook('post', 'save', next => {
+			// Remove first enable flag after credentials are added to the db
+			if (this.isFirstEnable) {
+				this._metadata.put('initialAuthEnable', false)
+					.then(() => { next() })
+					.catch(next)
+			}
+		})
+
+		const initialAuthEnable = this._metadata.get('initialAuthEnable')
+		let newInitAuthEnable = initialAuthEnable === undefined ? true : false
+
+		return this._metadata.put('initialAuthEnable', newInitAuthEnable)
+			.then(() => {
+				this.events.emit('auth-enabled')
+			})
 	}
 
 	/**

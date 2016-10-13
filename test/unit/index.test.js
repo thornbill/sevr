@@ -1,9 +1,9 @@
 /*eslint-env node, mocha */
 'use strict'
 
-const chai     = require('chai')
-const _        = require('lodash')
-const spies    = require('chai-spies')
+const chai  = require('chai')
+const _     = require('lodash')
+const spies = require('chai-spies')
 const Sevr  = require('../../index')
 
 const expect = chai.expect
@@ -27,18 +27,6 @@ describe('Sevr', function() {
 		expect(ich.config).to.have.deep.property('connection.port', 27017)
 	})
 
-	it('should load the collection definitions', function() {
-		const ich = new Sevr(require(paths.config))
-		expect(ich.definitions).to.haveOwnProperty('posts')
-		expect(ich.definitions).to.haveOwnProperty('authors')
-	})
-
-	it('should load the type definitions', function() {
-		const ich = new Sevr(require(paths.config))
-		expect(ich.types).to.haveOwnProperty('Email')
-		expect(ich.types).to.haveOwnProperty('Foo')
-	})
-
 	describe('attach()', function() {
 
 		it('should push the plugin to the plugins array', function() {
@@ -57,12 +45,14 @@ describe('Sevr', function() {
 			)
 			expect(ich._plugins).to.have.length(2)
 			expect(ich._plugins[0]).to.eql({
-				fn: pluginA,
-				config: { test: 1 }
+				klass: pluginA,
+				config: { test: 1 },
+				namespace: undefined
 			})
 			expect(ich._plugins[1]).to.eql({
-				fn: pluginB,
-				config: { test: 2 }
+				klass: pluginB,
+				config: { test: 2 },
+				namespace: undefined
 			})
 		})
 
@@ -119,16 +109,6 @@ describe('Sevr', function() {
 			})
 		})
 
-		it('should create the collections', function(done) {
-			const ich = new Sevr(require(paths.config))
-			const result = ich.connect()
-			result.then(() => {
-				expect(ich.collections).to.haveOwnProperty('posts')
-				expect(ich.collections).to.haveOwnProperty('authors')
-				done()
-			}).catch(done)
-		})
-
 	})
 
 	describe('_initPlugins()', function() {
@@ -144,78 +124,51 @@ describe('Sevr', function() {
 			]
 
 			ich._initPlugins()
-			expect(pluginA).to.have.been.called.once
-			expect(pluginB).to.have.been.called.once
-			expect(pluginA).to.have.been.called.with(ich, { test: 1 })
-			expect(pluginB).to.have.been.called.with(ich, undefined)
+				.then(() => {
+					expect(pluginA).to.have.been.called.once
+					expect(pluginB).to.have.been.called.once
+					expect(pluginA).to.have.been.called.with(ich, { test: 1 })
+					expect(pluginB).to.have.been.called.with(ich, undefined)
+				})
 		})
 
 	})
 
-	describe('_initMetaCollection()', function() {
+	describe('ready()', function() {
+		it('should attach a callback to the "ready" event', function(done) {
+			const sevr = new Sevr(require(paths.config))
+			const cb = chai.spy()
 
-		Sevr._destroyFactory()
-		const ich = new Sevr(require(paths.config))
-
-		before(function() {
-			return ich.connect()
-		})
-
-		afterEach(function() {
-			ich.connection.db.dropDatabase()
-		})
-
-		it('should create a meta collection with initial data if it does not exist', function(done) {
-			ich._initMetaCollection()
-				.then(meta => {
-					expect(meta).to.have.property('newDatabase', true)
-					expect(meta).to.have.deep.property('collections.authors.new', true)
-					expect(meta).to.have.deep.property('collections.posts.new', true)
-					done()
-				})
-				.catch(done)
-		})
-
-		it('should should set `newDatabase` to false for an existing meta collection', function(done) {
-			ich._initMetaCollection().then(() => {
-				ich._initMetaCollection()
-					.then(meta => {
-						expect(meta).to.have.property('newDatabase', false)
-						done()
-					})
-					.catch(done)
-			})
+			sevr.ready(cb)
+			sevr.events.emit('ready')
+			setTimeout(() => {
+				expect(cb).to.have.been.called.once
+				done()
+			}, 500)
 		})
 	})
 
-	describe('_addMetaCollectionHooks', function () {
-		Sevr._destroyFactory()
-		const ich = new Sevr(require(paths.config))
-
-		before(function() {
-			return ich.connect()
-		})
-
-		afterEach(function() {
-			delete ich.connection.models['Author']
-			ich.connection.db.dropDatabase()
-		})
-
-		it('should attach a post save hook to each new collection', function() {
-			return ich._initMetaCollection().then(() => {
-				return ich.collections.authors.model.create({
-					name: { first: 'testy', last: 'testerson' },
-					username: 'testUser',
-					email: 'test@testerson.com'
-				}).then(() => {
-					return new Promise(res => {
-						setTimeout(() => {
-							expect(ich._metaTree).to.have.deep.property('collections.authors.new', false)
-							res()
-						}, 500)
-					})
-				})
+	describe('reset()', function() {
+		it('should emit a "reset" event', function() {
+			const sevr = new Sevr(require(paths.config))
+			sevr.authentication.setMeta({
+				remove: () => {}
 			})
+			
+			chai.spy.on(sevr.events, 'emit')
+			sevr.reset()
+			expect(sevr.events.emit).to.have.been.called.once
+		})
+
+		it('it should call the authentication `reset` method', function() {
+			const sevr = new Sevr(require(paths.config))
+			sevr.authentication.setMeta({
+				remove: () => {}
+			})
+
+			chai.spy.on(sevr.authentication, 'reset')
+			sevr.reset()
+			expect(sevr.authentication.reset).to.have.been.called.once
 		})
 	})
 })

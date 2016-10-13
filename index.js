@@ -18,20 +18,17 @@ const Authentication    = require('./authentication')
 const defaultConfig     = require('./default-config')
 const defaultLogger     = require('./console-logger')
 const Errors            = require('./errors')
+const Meta              = require('./lib/meta')
+const utils             = require('./lib/utils')
 
 global.$logger = defaultLogger
-
-const metaCollectionName = 'ich_meta'
 
 class Sevr {
 	constructor(config) {
 		this._config = _.mergeWith({}, defaultConfig, config)
-		this._types = TypeLoader(this.config.types)
-		this._definitions = DefinitionLoader(this.config.collections, this.types)
 		this._server = express()
 		this._plugins = []
 		this._auth = new Authentication(this._config.secret)
-		this._metaTree = {}
 		this._events = new EventEmitter()
 	}
 
@@ -90,21 +87,26 @@ class Sevr {
 	 * Attach a plugin
 	 * @param  {Function} plugin
 	 * @param  {Object} config
+	 * @param  {String} namespace
+	 * @return {Sevr}
 	 */
-	attach(plugin, config) {
+	attach(plugin, config, namespace) {
 		if (typeof plugin !== 'function') {
 			throw new Error('Plugin must be a function')
 		}
 
 		this._plugins.push({
-			fn: plugin,
-			config: config
+			klass: plugin,
+			config,
+			namespace
 		})
+
+		return this
 	}
 
 	/**
 	 * Connect to the database
-	 * @return {promise}
+	 * @return {Promise}
 	 */
 	connect() {
 		const dbConfig = this._config.connection
@@ -117,8 +119,6 @@ class Sevr {
 			})
 			this._db.once('error', err => { rej(err) })
 			this._db.once('open', () => {
-				this._collectionFactory = new CollectionFactory(this._definitions, this._db)
-				this._initPlugins()
 				this.events.emit('db-ready')
 				res()
 			})
@@ -126,8 +126,65 @@ class Sevr {
 	}
 
 	/**
+	 * Start the Sevr service and begin the lifecyle
+	 * @return {Promise}
+	 */
+	start() {
+		return this.connect()
+			.then(() => {
+				// Create the meta collection
+				// Initialize plugins
+				Meta.createModel(this._db)
+				return this._initPlugins()
+			})
+			.then(() => {
+				// Load the types
+				// Allow plugins to register additional types
+				this._types = TypeLoader(this.config.types)
+				return this._pluginsCall('registerTypes', true)
+			})
+			.then(() => {
+				// Load the collections
+				// Allow plugins to register additional collections
+				this._definitions = DefinitionLoader(this.config.collections, this.types)
+				this._collectionFactory = new CollectionFactory(this._definitions, this._db)
+				return this._pluginsCall('registerCollections', true)
+			})
+			.then(() => {
+				// Intialize authentication
+				return Meta.getInstance('sevr-auth')
+					.then(meta => {
+						this._auth.setMeta(meta)
+					})
+			})
+			.then(() => {
+				// Plugin.didInitialize lifecycle method
+				return this._pluginsCall('didInitialize', true)
+			})
+			.then(() => {
+				// Plugin.willRun lifecycle method
+				return this._pluginsCall('willRun', true)
+			})
+			.then(() => {
+				this._events.emit('ready')
+				// Plugin.run lifecycle method
+				return this._pluginsRun()
+			})
+
+	}
+
+	/**
+	 * Wait for the connection to be ready
+	 * @return {Sevr}
+	 */
+	ready(fn) {
+		this.events.on('ready', fn)
+		return this
+	}
+
+	/**
 	 * Start the express web server
-	 * @return {Promise} [description]
+	 * @return {Promise}
 	 */
 	startServer() {
 		const serverConfig = this._config.server
@@ -143,6 +200,16 @@ class Sevr {
 	}
 
 	/**
+	 * Trigger a reset
+	 * @return {Promise}
+	 */
+	reset() {
+		this.events.emit('reset')
+		this.authentication.reset()
+		return this._pluginsCall('reset')
+	}
+
+	/**
 	 * Destroy the collection factory.
 	 * For testing purposes only.
 	 * @private
@@ -153,92 +220,62 @@ class Sevr {
 
 	/**
 	 * Initialize the array of plugins
+	 * @return {Promise}
 	 * @private
 	 */
 	_initPlugins() {
+		const promises = []
+
 		this._plugins.forEach(plugin => {
-			plugin.fn(this, plugin.config)
+			promises.push(
+				Meta.getInstance(plugin.namespace).then(meta => {
+					plugin.instance = new plugin.klass(this, plugin.config, meta)
+				})
+			)
 		})
+
+		return Promise.all(promises)
 	}
 
 	/**
-	 * Initialize the meta collection.
-	 * If the database is new, it will be marked as such, and an object will
-	 * be creted for each collection marking it is as new.
-	 * Resolves with the meta document
+	 * Execute a particular method for all plugins.
+	 * Methods can be called either concurrently or in sequence.
+	 * @param {any} method
 	 * @return {Promise}
 	 * @private
 	 */
-	_initMetaCollection() {
-		const db = this._db.db
-		const defaultData = {
-			_id: 0,
-			newDatabase: true,
-			collections: Object.keys(this.collections).reduce((obj, key) => {
-				return Object.assign(obj, {
-					[key]: { new: true }
-				})
-			}, {})
+	_pluginsCall(method, seq) {
+		const methods = []
+
+		this._plugins.forEach(plugin => {
+			if (typeof plugin.instance[method] !== 'function') return
+			methods.push(
+				// Bind the plugin method to it's instance, ensuring
+				// that `this` is available within the plugin class
+				plugin.instance[method].bind(plugin.instance)
+			)
+		})
+
+		if (seq) {
+			// Run each method in sequence
+			return utils.createPromiseSequence(methods)
+		} else {
+			// Run each method concurrently
+			return Promise.all(methods.map(fn => { return fn() }))
 		}
-
-		let metaColl
-		let hasMeta
-		let updateData
-
-		return new Promise((res, rej) => {
-			db.listCollections({}).toArray((err, colls) => {
-				if (err) return rej(err)
-
-				hasMeta = _(colls).map(val => { return val.name }).includes(metaCollectionName)
-				metaColl = this._db.collection(metaCollectionName)
-				updateData = hasMeta ? { newDatabase: false } : defaultData
-
-				metaColl.updateOne({ _id: 0 }, { $set: updateData }, { upsert: true })
-					.then(() => { return metaColl.findOne({ _id: 0 }) })
-					.then(meta => {
-						this._metaTree = meta
-						this._addMetaCollectionHooks()
-						res(meta)
-					})
-					.catch(rej)
-			})
-		})
 	}
 
 	/**
-	 * Update the meta collection data
-	 * @param {Object} updateData
-	 * @return {Promise}
-	 * @private
+	 * Execute the `run` lifecycle method for all plugins 
+	 * @return {Sevr}
 	 */
-	_updateMetaCollection(updateData) {
-		const metaColl = this._db.collection(metaCollectionName)
-
-		return metaColl.updateOne({ _id: 0 }, { $set: updateData }, { upsert: true })
-			.then(() => { return metaColl.findOne({ _id: 0 }) })
-			.then(meta => {
-				this._metaTree = meta
-				return meta
-			})
-	}
-
-	/**
-	 * Add a post save hook fo each collection
-	 * @private
-	 */
-	_addMetaCollectionHooks() {
-		Object.keys(this.collections).forEach(collName => {
-			const coll = this.collections[collName]
-
-			if (!this._metaTree.collections[collName].new) return
-
-			coll.attachHook('post', 'save', (doc, next) => {
-				this._updateMetaCollection({
-					collections: { [collName]: { new: false } }
-				})
-				next()
-			})
+	_pluginsRun() {
+		this._plugins.forEach(plugin => {
+			if (typeof plugin.instance.run !== 'function') return
+			plugin.instance.run()
 		})
+
+		return this
 	}
 }
 
