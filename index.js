@@ -19,17 +19,16 @@ const defaultConfig     = require('./default-config')
 const defaultLogger     = require('./console-logger')
 const Errors            = require('./errors')
 const Meta              = require('./lib/meta')
+const utils             = require('./lib/utils')
 
 global.$logger = defaultLogger
 
 class Sevr {
 	constructor(config) {
 		this._config = _.mergeWith({}, defaultConfig, config)
-		this._types = TypeLoader(this.config.types)
-		this._definitions = DefinitionLoader(this.config.collections, this.types)
 		this._server = express()
 		this._plugins = []
-		this._auth = {}
+		this._auth = new Authentication(this._config.secret)
 		this._events = new EventEmitter()
 	}
 
@@ -97,7 +96,7 @@ class Sevr {
 		}
 
 		this._plugins.push({
-			fn: plugin,
+			klass: plugin,
 			config,
 			namespace
 		})
@@ -120,31 +119,56 @@ class Sevr {
 			})
 			this._db.once('error', err => { rej(err) })
 			this._db.once('open', () => {
-				this._collectionFactory = new CollectionFactory(this._definitions, this._db)
 				this.events.emit('db-ready')
 				res()
 			})
 		})
-		.then(() => {
-			// Setup initial metadata
-			Meta.createModel(this._db)
-
-			return Meta.getInstance('sevr-auth')
-				.then(meta => {
-					this._auth = new Authentication(this._config.secret, meta)
-				})
-		})
 	}
 
 	/**
-	 * Start the Sevr service
+	 * Start the Sevr service and begin the lifecyle
 	 * @return {Promise}
 	 */
 	start() {
-		// Initialize plugins
-		return this._initPlugins()
+		return this.connect()
 			.then(() => {
-				this.events.emit('ready')
+				// Create the meta collection
+				// Initialize plugins
+				Meta.createModel(this._db)
+				return this._initPlugins()
+			})
+			.then(() => {
+				// Load the types
+				// Allow plugins to register additional types
+				this._types = TypeLoader(this.config.types)
+				return this._pluginsCall('registerTypes', true)
+			})
+			.then(() => {
+				// Load the collections
+				// Allow plugins to register additional collections
+				this._definitions = DefinitionLoader(this.config.collections, this.types)
+				this._collectionFactory = new CollectionFactory(this._definitions, this._db)
+				return this._pluginsCall('registerCollections', true)
+			})
+			.then(() => {
+				// Intialize authentication
+				return Meta.getInstance('sevr-auth')
+					.then(meta => {
+						this._auth.setMeta(meta)
+					})
+			})
+			.then(() => {
+				// Plugin.didInitialize lifecycle method
+				return this._pluginsCall('didInitialize', true)
+			})
+			.then(() => {
+				// Plugin.willRun lifecycle method
+				return this._pluginsCall('willRun', true)
+			})
+			.then(() => {
+				this._events.emit('ready')
+				// Plugin.run lifecycle method
+				return this._pluginsRun()
 			})
 
 	}
@@ -177,12 +201,12 @@ class Sevr {
 
 	/**
 	 * Trigger a reset
-	 * @return {Sevr}
+	 * @return {Promise}
 	 */
 	reset() {
 		this.events.emit('reset')
 		this.authentication.reset()
-		return this
+		return this._pluginsCall('reset')
 	}
 
 	/**
@@ -201,15 +225,57 @@ class Sevr {
 	 */
 	_initPlugins() {
 		const promises = []
+
 		this._plugins.forEach(plugin => {
 			promises.push(
 				Meta.getInstance(plugin.namespace).then(meta => {
-					plugin.fn(this, plugin.config, meta)
+					plugin.instance = new plugin.klass(this, plugin.config, meta)
 				})
 			)
 		})
 
 		return Promise.all(promises)
+	}
+
+	/**
+	 * Execute a particular method for all plugins.
+	 * Methods can be called either concurrently or in sequence.
+	 * @param {any} method
+	 * @return {Promise}
+	 * @private
+	 */
+	_pluginsCall(method, seq) {
+		const methods = []
+
+		this._plugins.forEach(plugin => {
+			if (typeof plugin.instance[method] !== 'function') return
+			methods.push(
+				// Bind the plugin method to it's instance, ensuring
+				// that `this` is available within the plugin class
+				plugin.instance[method].bind(plugin.instance)
+			)
+		})
+
+		if (seq) {
+			// Run each method in sequence
+			return utils.createPromiseSequence(methods)
+		} else {
+			// Run each method concurrently
+			return Promise.all(methods.map(fn => { return fn() }))
+		}
+	}
+
+	/**
+	 * Execute the `run` lifecycle method for all plugins 
+	 * @return {Sevr}
+	 */
+	_pluginsRun() {
+		this._plugins.forEach(plugin => {
+			if (typeof plugin.instance.run !== 'function') return
+			plugin.instance.run()
+		})
+
+		return this
 	}
 }
 

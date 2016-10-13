@@ -27,18 +27,6 @@ describe('Sevr', function() {
 		expect(ich.config).to.have.deep.property('connection.port', 27017)
 	})
 
-	it('should load the collection definitions', function() {
-		const ich = new Sevr(require(paths.config))
-		expect(ich.definitions).to.haveOwnProperty('posts')
-		expect(ich.definitions).to.haveOwnProperty('authors')
-	})
-
-	it('should load the type definitions', function() {
-		const ich = new Sevr(require(paths.config))
-		expect(ich.types).to.haveOwnProperty('Email')
-		expect(ich.types).to.haveOwnProperty('Foo')
-	})
-
 	describe('attach()', function() {
 
 		it('should push the plugin to the plugins array', function() {
@@ -57,12 +45,12 @@ describe('Sevr', function() {
 			)
 			expect(ich._plugins).to.have.length(2)
 			expect(ich._plugins[0]).to.eql({
-				fn: pluginA,
+				klass: pluginA,
 				config: { test: 1 },
 				namespace: undefined
 			})
 			expect(ich._plugins[1]).to.eql({
-				fn: pluginB,
+				klass: pluginB,
 				config: { test: 2 },
 				namespace: undefined
 			})
@@ -121,16 +109,6 @@ describe('Sevr', function() {
 			})
 		})
 
-		it('should create the collections', function(done) {
-			const ich = new Sevr(require(paths.config))
-			const result = ich.connect()
-			result.then(() => {
-				expect(ich.collections).to.haveOwnProperty('posts')
-				expect(ich.collections).to.haveOwnProperty('authors')
-				done()
-			}).catch(done)
-		})
-
 	})
 
 	describe('_initPlugins()', function() {
@@ -154,5 +132,43 @@ describe('Sevr', function() {
 				})
 		})
 
+	})
+
+	describe('ready()', function() {
+		it('should attach a callback to the "ready" event', function(done) {
+			const sevr = new Sevr(require(paths.config))
+			const cb = chai.spy()
+
+			sevr.ready(cb)
+			sevr.events.emit('ready')
+			setTimeout(() => {
+				expect(cb).to.have.been.called.once
+				done()
+			}, 500)
+		})
+	})
+
+	describe('reset()', function() {
+		it('should emit a "reset" event', function() {
+			const sevr = new Sevr(require(paths.config))
+			sevr.authentication.setMeta({
+				remove: () => {}
+			})
+			
+			chai.spy.on(sevr.events, 'emit')
+			sevr.reset()
+			expect(sevr.events.emit).to.have.been.called.once
+		})
+
+		it('it should call the authentication `reset` method', function() {
+			const sevr = new Sevr(require(paths.config))
+			sevr.authentication.setMeta({
+				remove: () => {}
+			})
+
+			chai.spy.on(sevr.authentication, 'reset')
+			sevr.reset()
+			expect(sevr.authentication.reset).to.have.been.called.once
+		})
 	})
 })
