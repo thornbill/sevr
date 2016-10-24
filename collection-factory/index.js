@@ -5,6 +5,16 @@ const Collection = require('../collection')
 
 let factoryInstance = null
 
+/**
+ * Collection Factory
+ * 
+ * Singleton used to create and store a map
+ * of collections.
+ * 
+ * @param {Object} defs
+ * @param {Mongoose.Connection} connection
+ * @class CollectionFactory
+ */
 class CollectionFactory {
 	constructor(defs, connection) {
 		if (!factoryInstance) {
@@ -27,6 +37,7 @@ class CollectionFactory {
 
 	/**
 	 * Get a collection instance by name
+	 * 
 	 * @param  {String} name
 	 * @return {Collection}
 	 */
@@ -42,6 +53,7 @@ class CollectionFactory {
 
 	/**
 	 * Get a collection instance by model name
+	 * 
 	 * @param  {String} modelName
 	 * @return {Collection}
 	 */
@@ -53,18 +65,27 @@ class CollectionFactory {
 
 	/**
 	 * Get all collection instances
+	 * 
+	 * @readonly
 	 * @return {Object}
 	 */
 	get collections() {
 		return Object.assign({}, this._instances)
 	}
 
+	/**
+	 * Get the Mongoose connection
+	 * 
+	 * @readonly
+	 */
 	get connection() {
 		return this._connection
 	}
 
 	/**
 	 * Destroy the factory instance. This is for testing only.
+	 * 
+	 * @static
 	 * @private
 	 */
 	static _destroy() {

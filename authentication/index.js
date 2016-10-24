@@ -5,6 +5,13 @@ const jwt          = require('jsonwebtoken')
 const EventEmitter = require('events').EventEmitter
 const Errors       = require('../errors')
 
+/**
+ * Authentication interface
+ * 
+ * @param {String} tokenSecret
+ * @param {Object} metadata
+ * @class Authentication
+ */
 class Authentication {
 	constructor(tokenSecret, metadata) {
 		this._enabled = false
@@ -15,56 +22,98 @@ class Authentication {
 		this._metadata = metadata
 	}
 
+	/**
+	 * Is authentication enabld
+	 * 
+	 * @readonly
+	 * @type Boolean
+	 */
 	get isEnabled() {
 		return this._enabled
 	}
 
+	/**
+	 * Is this the first time authentication has been enabled
+	 * 
+	 * @readonly
+	 * @type Boolean
+	 */
 	get isFirstEnable() {
 		return !!this._metadata.get('initialAuthEnable')
 	}
 
+	/**
+	 * The collection used to store auth credentials
+	 * 
+	 * @readonly
+	 * @type Collection
+	 */
 	get collection() {
 		return this._collection
 	}
 
+	/**
+	 * EventEmitter
+	 * 
+	 * @readonly
+	 * @type EventEmitter
+	 */
 	get events() {
 		return this._events
 	}
 
+	/**
+	 * The currently authenticated user
+	 * 
+	 * @type Object
+	 */
 	get user() {
 		return this._user
 	}
 
 	set user(userDoc) {
-		let user
-
-		if (typeof userDoc.toObject === 'function') {
-			user = userDoc.toObject({ getters: true, setters: true })
-		} else {
-			user = userDoc
-		}
-
-		delete user.password
-		this._user = user
+		this._user = Authentication.normalizeUser(userDoc)
 	}
 
+	/**
+	 * Assign the metadata object
+	 * 
+	 * @param {any} meta
+	 * @return {Authentication}
+	 */
 	setMeta(meta) {
 		this._metadata = meta
+		return this
 	}
 
+	/**
+	 * Invalidate the current user
+	 * 
+	 * @return {Authentication}
+	 */
 	invalidate() {
 		this._user = null
 		return this
 	}
 
+	/**
+	 * Reset the metadata
+	 * 
+	 * @return {Authentication}
+	 */
 	reset() {
 		this._metadata.remove('initialAuthEnable')
+		return {Authentication}
 	}
 
 	/**
-	 * Enable authentication and add the authentication collection. Sets
-	 * the `firstEnable` meta key if this is the first time authentication
+	 * Enable authentication and add the authentication collection.
+	 * 
+	 * Sets he `firstEnable` meta key if this is the first time authentication
 	 * has been enabled
+	 * 
+	 * Will emit `auth-enabled` once complete
+	 * 
 	 * @param  {Collection} coll
 	 * @return {Promise}
 	 */
@@ -98,7 +147,9 @@ class Authentication {
 
 	/**
 	 * Attempt to validate user credentials.
+	 * 
 	 * When successful, resolves with user document
+	 * 
 	 * @param  {Object} creds
 	 * @return {Promise}
 	 */
@@ -122,16 +173,17 @@ class Authentication {
 	}
 
 	/**
-	 * Create a JWT token with the given
-	 * user information.
+	 * Create a JWT token with the given user information.
+	 * 
 	 * Returned promise resolves with the token
+	 * 
 	 * @param  {Object} user
 	 * @return {Promise}
 	 */
 	createToken(user) {
 		return new Promise((res, rej) => {
 			try {
-				jwt.sign(user.toObject(), this._tokenSecret, null, token => {
+				jwt.sign(Authentication.normalizeUser(user), this._tokenSecret, null, token => {
 					res(token)
 				})
 			} catch(err) {
@@ -142,30 +194,60 @@ class Authentication {
 
 	/**
 	 * Verify a JWT token.
+	 * 
 	 * Returned promise resolves with the user document
+	 * 
 	 * @param  {String} token
 	 * @return {Promise}
 	 */
 	verifyToken(token) {
 		return new Promise((res, rej) => {
 			jwt.verify(token, this._tokenSecret, (err, user) => {
-				if (err) {
-					return rej(err)
-				}
+				if (err) return rej(err)
 
-				this.user = user
-				res(this.user)
+				// Read the user from the db to ensure
+				// the user object has the most recent data
+				this._collection.readById(user.id)
+					.then(doc => {
+						this.user = doc
+						res(this.user)
+					})
+					.catch(rej)
 			})
 		})
 	}
 
 	/**
 	 * Password field setter
+	 * 
 	 * @param {String} val
 	 * @private
 	 */
 	static _setPassword(val) {
 		return bcrypt.hashSync(val, 10)
+	}
+
+	/**
+	 * Normalize a user object such that a Mongoose document
+	 * becomes a plain object.
+	 * 
+	 * Also deletes the password property from the user
+	 * 
+	 * @static
+	 * @param {any} userDoc
+	 * @return {Object}
+	 */
+	static normalizeUser(userDoc) {
+		let user
+
+		if (typeof userDoc.toObject === 'function') {
+			user = userDoc.toObject({ getters: true, setters: true })
+		} else {
+			user = userDoc
+		}
+
+		delete user.password
+		return user
 	}
 }
 

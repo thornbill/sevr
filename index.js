@@ -1,12 +1,5 @@
 'use strict'
 
-/**
- * Sevr
- * ---
- * Initialize the sevr core.
- *
- */
-
 const mongoose          = require('mongoose')
 const express           = require('express')
 const _                 = require('lodash')
@@ -23,6 +16,13 @@ const utils             = require('./lib/utils')
 
 global.$logger = defaultLogger
 
+/**
+ * Sevr
+ * 
+ * Core Sevr library
+ * 
+ * @class Sevr
+ */
 class Sevr {
 	constructor(config) {
 		this._config = _.mergeWith({}, defaultConfig, config)
@@ -32,46 +32,109 @@ class Sevr {
 		this._events = new EventEmitter()
 	}
 
+	/**
+	 * The Sevr config object
+	 * 
+	 * @readonly
+	 */
 	get config() {
 		return Object.assign({}, this._config)
 	}
 
+	/**
+	 * Ttype definitions
+	 * 
+	 * @readonly
+	 */
 	get types() {
 		return Object.assign({}, this._types)
 	}
 
+	/**
+	 * Collection definitions
+	 * 
+	 * @readonly
+	 */
 	get definitions() {
 		return Object.assign({}, this._definitions)
 	}
 
+	/**
+	 * Collection factory
+	 * 
+	 * @readonly
+	 */
 	get factory() {
 		return this._collectionFactory
 	}
 
+	/**
+	 * Loaded collection instances
+	 * 
+	 * @readonly
+	 */
 	get collections() {
 		return this._collectionFactory.collections
 	}
 
+	/**
+	 * Database connection
+	 * 
+	 * @readonly
+	 */
 	get connection() {
 		return this._db
 	}
 
+	/**
+	 * Express web server
+	 * 
+	 * @readonly
+	 */
 	get server() {
 		return this._server
 	}
 
+	/**
+	 * Sevr logger object
+	 * 
+	 * @readonly
+	 */
 	get logger() {
 		return Sevr.logger
 	}
 
+	/**
+	 * Authentication instance
+	 * 
+	 * @readonly
+	 */
 	get authentication() {
 		return this._auth
 	}
 
+	/**
+	 * Sevr event emitter
+	 * 
+	 * @readonly
+	 */
 	get events() {
 		return this._events
 	}
 
+	/**
+	 * Set the logger object used by Sevr
+	 * 
+	 * object must implement the following methods:
+	 * - `verbose`
+	 * - `info`
+	 * - `warning`
+	 * - `error`
+	 * - `critical`
+	 * 
+	 * @static
+	 * @param {Object} logger
+	 */
 	static setLogger(logger) {
 		['verbose', 'info', 'warning', 'error', 'critical'].forEach((type, i, all) => {
 			if (!logger.hasOwnProperty(type)) {
@@ -85,9 +148,13 @@ class Sevr {
 
 	/**
 	 * Attach a plugin
-	 * @param  {Function} plugin
-	 * @param  {Object} config
-	 * @param  {String} namespace
+	 * 
+	 * @example
+	 * sevr.attach(PluginClass, {}, 'sevr.plugin')
+	 * 
+	 * @param  {Function} plugin The plugin class or constructor function
+	 * @param  {Object} config Configuration to be passed to the plugin
+	 * @param  {String} namespace The plugin's namespace'
 	 * @return {Sevr}
 	 */
 	attach(plugin, config, namespace) {
@@ -105,7 +172,11 @@ class Sevr {
 	}
 
 	/**
-	 * Connect to the database
+	 * Connect to the MongoDB database
+	 * 
+	 * Returns a promise that resolves once the connection is open.
+	 * It also emits a `db-ready` event the connection is open
+	 * 
 	 * @return {Promise}
 	 */
 	connect() {
@@ -127,6 +198,12 @@ class Sevr {
 
 	/**
 	 * Start the Sevr service and begin the lifecyle
+	 * 
+	 * Creates the collections and types, initializes authentication,
+	 * and executes plugin lifecycle methods.
+	 * 
+	 * Emits a `ready` event once the lifecycle is complete
+	 * 
 	 * @return {Promise}
 	 */
 	start() {
@@ -175,6 +252,10 @@ class Sevr {
 
 	/**
 	 * Wait for the connection to be ready
+	 * 
+	 * Attaches a callback function to the `ready` event
+	 * 
+	 * @param {Function} fn Callback function
 	 * @return {Sevr}
 	 */
 	ready(fn) {
@@ -184,6 +265,10 @@ class Sevr {
 
 	/**
 	 * Start the express web server
+	 * 
+	 * Returns a promise that resolves once the web server is
+	 * ready to accept connections.
+	 * 
 	 * @return {Promise}
 	 */
 	startServer() {
@@ -201,6 +286,10 @@ class Sevr {
 
 	/**
 	 * Trigger a reset
+	 * 
+	 * Emits the `reset` event, triggers an authentication reset,
+	 * and calls all plugin reset methods
+	 * 
 	 * @return {Promise}
 	 */
 	reset() {
@@ -268,6 +357,7 @@ class Sevr {
 	/**
 	 * Execute the `run` lifecycle method for all plugins 
 	 * @return {Sevr}
+	 * @private
 	 */
 	_pluginsRun() {
 		this._plugins.forEach(plugin => {
@@ -279,7 +369,20 @@ class Sevr {
 	}
 }
 
+/**
+ * The Sevr logger object
+ * 
+ * @static
+ * @memberOf Sevr
+ */
 Sevr.logger = defaultLogger
+
+/**
+ * Error classes
+ * 
+ * @static
+ * @memberOf Sevr
+ */
 Sevr.Errors = Errors
 
 module.exports = Sevr
