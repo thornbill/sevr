@@ -207,7 +207,7 @@ class Authentication {
 
 				// Read the user from the db to ensure
 				// the user object has the most recent data
-				this._collection.readById(user.id)
+				this._collection.readById(user._id)
 					.then(doc => {
 						this.user = doc
 						res(this.user)
