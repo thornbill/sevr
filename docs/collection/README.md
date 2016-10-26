@@ -1,3 +1,0 @@
-# Collection API
-
-TODO

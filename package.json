@@ -30,7 +30,8 @@
     "url": "git@github.com:ExclamationLabs/sevr.git"
   },
   "scripts": {
-    "test": "mocha test/**/*"
+    "test": "mocha test/**/*",
+    "docs": "scripts/docs"
   },
   "author": "David Street",
   "license": "MIT",
@@ -47,6 +48,7 @@
     "chai": "^3.5.0",
     "chai-as-promised": "^5.3.0",
     "chai-spies": "^0.7.1",
+    "jsdoc-to-markdown": "^2.0.1",
     "mocha": "^2.4.5"
   }
 }

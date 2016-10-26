@@ -19,6 +19,14 @@ const requiredProperties = {
 
 mongoose.Promise = global.Promise
 
+/**
+ * Collection
+ * 
+ * The Collection class is used primarily for interfacing with
+ * the data
+ * 
+ * @class Collection
+ */
 class Collection {
 	constructor(name, def, factory) {
 		this._name = name
@@ -52,9 +60,11 @@ class Collection {
 
 	/**
 	 * Check if a collection definition is valid
+	 * 
 	 * @param {Object} definition
 	 * @param {Array} [errors] Mutated by the method to return all errors
 	 * @return {Boolean}
+	 * @static
 	 */
 	static isValidDefinition(definition, errors) {
 		let isValid = true
@@ -86,9 +96,11 @@ class Collection {
 
 	/**
 	 * Check if a field definition is valid
+	 * 
 	 * @param  {Object} fieldDef
 	 * @param  {Array} errors
 	 * @return {Boolean}
+	 * @static
 	 */
 	static isValidField(fieldDef, errors) {
 		let isValid = true
@@ -118,33 +130,41 @@ class Collection {
 	}
 
 	/**
-	 * Get the collection name
-	 * @return {String}
+	 * The Collection name
+	 * 
+	 * @readonly
+	 * @memberOf Collection
 	 */
 	get name() {
 		return this._name
 	}
 
 	/**
-	 * Get the collection definition
-	 * @return {Object}
+	 * The collection definition
+	 * 
+	 * @readonly
+	 * @memberOf Collection
 	 */
 	get definition() {
 		return _.defaultsDeep({}, this._definition)
 	}
 
 	/**
-	 * Get the collection's model name
-	 * @return {String}
+	 * The name of the collection model
+	 * 
+	 * @readonly
+	 * @memberOf Collection
 	 */
 	get modelName() {
 		return this._definition.singular
 	}
 
 	/**
-	 * Get the array of fields that need to be populated
-	 * by Mongoose
-	 * @return {Array}
+	 * An array of fields that will be populated by
+	 * other collections
+	 * 
+	 * @readonly
+	 * @memberOf Collection
 	 */
 	get populationFields() {
 		return Object.keys(
@@ -158,29 +178,45 @@ class Collection {
 		)
 	}
 
+	
 	/**
-	 * Get the Mongoose model
-	 * @return {Object}
+	 * The Mongoose model
+	 * 
+	 * @readonly
+	 * @memberOf Collection
 	 */
 	get model() {
 		return this._model
 	}
 
 	/**
-	 * Get the model's schema
+	 * The model schema
+	 * 
+	 * @readonly
+	 * @memberOf Collection
 	 */
 	get schema() {
 		return this._model.schema
 	}
 
 	/**
-	 * Get the collection metadata
-	 * @return {Object}
+	 * The collection's metadata as defined in the
+	 * collection definition'
+	 * 
+	 * @readonly
+	 * @memberOf Collection
 	 */
 	get meta() {
 		return this.getMeta()
 	}
 
+	/**
+	 * The default field specified in the collection.
+	 * Defaults to `_id`
+	 * 
+	 * @readonly
+	 * @memberOf Collection
+	 */
 	get defaultField() {
 		if (this._definition.hasOwnProperty('defaultField')) {
 			return this._definition.defaultField
@@ -190,9 +226,11 @@ class Collection {
 	}
 
 	/**
-	 * Get the field ref
+	 * Get the field ref from a field definition
+	 * 
 	 * @param  {Object} fieldDef
 	 * @return {String}
+	 * @static
 	 */
 	static getFieldRef(fieldDef) {
 		const schemaType = fieldDef.schemaType
@@ -206,8 +244,10 @@ class Collection {
 
 	/**
 	 * Get the field name used for displaying a refrence field
+	 * 
 	 * @param  {Object} fieldDef
 	 * @return {String}
+	 * @static
 	 */
 	static getFieldRefDisplay(fieldDef) {
 		const schemaType = fieldDef.schemaType
@@ -221,6 +261,10 @@ class Collection {
 
 	/**
 	 * Return all collection field definitions
+	 * 
+	 * If flatten is true, the result will flatten all
+	 * nested properties.
+	 * 
 	 * @param  {Boolean} [flatten=false]
 	 * @return {Object}
 	 */
@@ -243,6 +287,32 @@ class Collection {
 
 	/**
 	 * Inflate fields that have been flattened
+	 * 
+	 * @example
+	 * const fields = {
+	 *     'name.first': {
+	 *         flattened: true,
+	 *         label: 'First',
+	 *         schemaType: { type: String }
+	 *     },
+	 *     'name.last': {
+	 *         flattened: true,
+	 *         label: 'Last',
+	 *         schemaType: { type: String }
+	 *     },
+	 * }
+	 * 
+	 * inflateFields(fields)
+	 * // {
+	 * //     name: {
+	 * //        label: 'Name',
+	 * //        schemaType: {
+	 * //            first: { label: 'First', type: String },
+	 * //            last: { label: 'Last', type: String }
+	 * //        }
+	 * //     }
+	 * // }
+	 * 
 	 * @param  {Object} flattened
 	 * @return {Object}
 	 */
@@ -271,7 +341,10 @@ class Collection {
 
 	/**
 	 * Return a field from the definition.
-	 * If the field has a ref, add `referenceModel` property
+	 * 
+	 * If the field has a ref, add `referenceModel` property.
+	 * Optionally flatten a nested property structure.
+	 * 
 	 * @param  {String}  fieldName
 	 * @param  {Boolean} [flatten=false]
 	 * @return {Object|Array}
@@ -306,6 +379,7 @@ class Collection {
 
 	/**
 	 * Get the available options for all reference fields
+	 * 
 	 * @return {Promise}
 	 */
 	getRefOptions() {
@@ -343,6 +417,10 @@ class Collection {
 
 	/**
 	 * Get the field type name
+	 * 
+	 * Normalizes the name for fields that may
+	 * contain an array of values.
+	 * 
 	 * @param  {String} fieldName
 	 * @return {String}
 	 */
@@ -359,6 +437,15 @@ class Collection {
 
 	/**
 	 * Get an array of field types associated with the field
+	 * 
+	 * Values are in the following order:
+	 * 1. Field name
+	 * 2. Schema name
+	 * 3. Mongoose schema type name (usually a constructor)
+	 * 4. 'COMPLEX'
+	 * 
+	 * 'COMPLEX' is used for fields that have a nested property structure
+	 * 
 	 * @param  {String} fieldName
 	 * @return {Array}
 	 */
@@ -391,6 +478,10 @@ class Collection {
 
 	/**
 	 * Get the meta property, or all meta if no property provided
+	 * 
+	 * If the property value is an object, a copy of the object
+	 * is returned in order to maintain immutability.
+	 * 
 	 * @param  {String} [prop]
 	 * @return {*}
 	 */
@@ -401,7 +492,7 @@ class Collection {
 			return _.assign({}, this._definition.meta)
 		}
 
-		if(typeof this._definition.meta[prop] == 'object') {
+		if (typeof this._definition.meta[prop] == 'object') {
 			return _.assign({}, this._definition.meta[prop])
 		} else {
 			return this._definition.meta[prop]
@@ -410,23 +501,27 @@ class Collection {
 
 	/**
 	 * Extend a field schema
+	 * 
 	 * @param  {String} field
 	 * @param  {String} prop
 	 * @param  {*} value
+	 * @return {Collection}
 	 */
 	extendFieldSchema(field, prop, value) {
 		if (!this.getField(field)) return
 		if (typeof this.schema.path(field)[prop] !== 'function') return
 
 		this.schema.path(field)[prop](value)
+		return this
 	}
 
 	/**
 	 * Add a field to the collection definition
+	 * 
 	 * @param {String} name
 	 * @param {String} label
 	 * @param {*}      schemaType
-	 * @returns this
+	 * @return {Collection}
 	 */
 	addField(name, label, schemaType) {
 		this._definition.fields[name] = {
@@ -442,9 +537,14 @@ class Collection {
 
 	/**
 	 * Attach a hook to the schema
+	 * 
+	 * `when` must be 'pre' or 'post'.
+	 * `type` can be any Mongoose hook type.
+	 * 
 	 * @param  {String}   when
 	 * @param  {String}   type
 	 * @param  {Function} cb
+	 * @return {Collection}
 	 */
 	attachHook(when, type, cb) {
 		if (when !== 'pre' && when !== 'post') {
@@ -452,13 +552,28 @@ class Collection {
 		}
 
 		this.schema[when].call(this.schema, type, cb)
+		return this
 	}
 
 	/**
 	 * Add `before` middleware for query operation
+	 * 
+	 * The callback function will be passed a query
+	 * instance, and must return a value in order for
+	 * the next middleware to be called. for
+	 * asynchronous actions, the callback can return a
+	 * Promise. An error can be thrown to exit the middleware
+	 * chain.
+	 * 
+	 * @example
+	 * collection.useBefore('read', query => {
+	 *     console.log(`called read with ${query}`)
+	 *     return query
+	 * })
+	 * 
 	 * @param   {String}     op
 	 * @param   {Function}   fn
-	 * @returns {Collection}
+	 * @return {Collection}
 	 */
 	useBefore(op, fn) {
 		this.model.useBefore(op, fn)
@@ -467,9 +582,19 @@ class Collection {
 
 	/**
 	 * Add `after` middleware for query operation
+	 * 
+	 * The callback function will be passed the resulting
+	 * object from the database call.
+	 * 
+	 * @example
+	 * collection.useAfter('read', result => {
+	 *     console.log(`called succeeded with ${result}`)
+	 *     return result
+	 * })
+	 * 
 	 * @param   {String}     op
 	 * @param   {Function}   fn
-	 * @returns {Collection}
+	 * @return {Collection}
 	 */
 	useAfter(op, fn) {
 		this.model.useAfter(op, fn)
@@ -482,12 +607,29 @@ class Collection {
 
 	/**
 	 * Read the collection
+	 * 
+	 * Promise resolves with an array of found documents
+	 * or a single document object if `single` is true.
+	 * 
+	 * @example
+	 * // Read all documents from the collection
+	 * collection.read()
+	 *     .then(res => {
+	 *         console.log(res)
+	 *     })
+	 * 
+	 * // Read all documents where qty > 10
+	 * collection.read({ qty: { $gt: 10 }})
+	 *     .then(res => {
+	 *         console.log(res)
+	 *     })
+	 * 
 	 * @param   {Object}  [query]
 	 * @param   {Array}   [selectFields]
 	 * @param   {Boolean} [populate=false]
 	 * @param   {Boolean} [single=false]
 	 * @param   {Boolean} [returnQuery=false]
-	 * @returns {Promise|Query}
+	 * @return {Promise|Query}
 	 */
 	read(query, selectFields, populate, single, returnQuery) {
 		const popFields = populate ? this.populationFields : []
@@ -518,11 +660,14 @@ class Collection {
 
 	/**
 	 * Read a single document by id
+	 * 
+	 * Promise resolves with a single document object
+	 * 
 	 * @param   {ObjectId|String|Number} id
 	 * @param   {Array} [selectFields]
 	 * @param   {Boolean} [populate=false]
 	 * @param   {Boolean} [returnQuery=false]
-	 * @returns {Promise|Query}
+	 * @return {Promise|Query}
 	 */
 	readById(id, selectFields, populate, returnQuery) {
 		const popFields = populate ? this.populationFields : []
@@ -549,9 +694,16 @@ class Collection {
 
 	/**
 	 * Create a new document within the collection
+	 * 
 	 * The resolved document will populate all referenced fields
+	 * 
+	 * @example
+	 * collection.create({
+	 *     name: { first: 'John', last: 'Doe' }
+	 * })
+	 * 
 	 * @param   {Object}  data
-	 * @returns {Promise}
+	 * @return {Promise}
 	 */
 	create(data) {
 		const popFields = this.populationFields
@@ -568,8 +720,23 @@ class Collection {
 
 	/**
 	 * Overwrite the collection with new documents
+	 * 
+	 * Promise resolves with the array of documents
+	 * 
+	 * @example
+	 * colleciton.update([
+	 *     {
+	 *         name: 'Shirt'
+	 *         qty: 10
+	 *     },
+	 *     {
+	 *         name: 'Pants'
+	 *         qty: 5
+	 *      }
+	 * ])
+	 * 
 	 * @param   {Array}   docs
-	 * @returns {Promise}
+	 * @return {Promise}
 	 */
 	update(docs) {
 		const self = this
@@ -600,9 +767,12 @@ class Collection {
 
 	/**
 	 * Update a single document by id
+	 * 
+	 * Promise resolves with the updated document
+	 * 
 	 * @param   {ObjectId|String|Number} id
 	 * @param   {Object}                 data
-	 * @returns {Promise}
+	 * @return {Promise}
 	 */
 	updateById(id, data) {
 		return this.model.findByIdAndUpdate(id, data, {
@@ -613,7 +783,11 @@ class Collection {
 
 	/**
 	 * Delete all documents from the collection
-	 * @returns {Promise}
+	 * 
+	 * Promise will resolve with an array of the
+	 * documents removed.
+	 * 
+	 * @returns{Promise}
 	 */
 	del() {
 		return this.model.find().exec()
@@ -630,8 +804,9 @@ class Collection {
 
 	/**
 	 * Delete a single document from the collection
+	 * 
 	 * @param   {ObjectId|String|Number} id
-	 * @returns {Promise}
+	 * @return {Promise}
 	 */
 	delById(id) {
 		return this.model.findByIdAndRemove(id).exec()
