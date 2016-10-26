@@ -19,10 +19,9 @@
         * [.attach(plugin, config, namespace)](#Sevr+attach) ⇒ <code>[Sevr](#Sevr)</code>
         * [.connect()](#Sevr+connect) ⇒ <code>Promise</code>
         * [.start()](#Sevr+start) ⇒ <code>Promise</code>
-        * [.ready()](#Sevr+ready) ⇒ <code>[Sevr](#Sevr)</code>
+        * [.ready(fn)](#Sevr+ready) ⇒ <code>[Sevr](#Sevr)</code>
         * [.startServer()](#Sevr+startServer) ⇒ <code>Promise</code>
         * [.reset()](#Sevr+reset) ⇒ <code>Promise</code>
-        * [._pluginsRun()](#Sevr+_pluginsRun) ⇒ <code>[Sevr](#Sevr)</code>
     * _static_
         * [.logger](#Sevr.logger)
         * [.Errors](#Sevr.Errors)
@@ -144,13 +143,17 @@ Emits a `ready` event once the lifecycle is complete
 **Kind**: instance method of <code>[Sevr](#Sevr)</code>  
 <a name="Sevr+ready"></a>
 
-### sevr.ready() ⇒ <code>[Sevr](#Sevr)</code>
+### sevr.ready(fn) ⇒ <code>[Sevr](#Sevr)</code>
 Wait for the connection to be ready
 
-Attacheds a callback function to the `ready` event
+Attaches a callback function to the `ready` event
 
 **Kind**: instance method of <code>[Sevr](#Sevr)</code>  
-**Pram**: <code>Function</code> fn  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| fn | <code>function</code> | Callback function |
+
 <a name="Sevr+startServer"></a>
 
 ### sevr.startServer() ⇒ <code>Promise</code>
@@ -167,12 +170,6 @@ Trigger a reset
 
 Emits the `reset` event, triggers an authentication reset,
 and calls all plugin reset methods
-
-**Kind**: instance method of <code>[Sevr](#Sevr)</code>  
-<a name="Sevr+_pluginsRun"></a>
-
-### sevr._pluginsRun() ⇒ <code>[Sevr](#Sevr)</code>
-Execute the `run` lifecycle method for all plugins
 
 **Kind**: instance method of <code>[Sevr](#Sevr)</code>  
 <a name="Sevr.logger"></a>

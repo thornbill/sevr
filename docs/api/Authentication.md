@@ -2,10 +2,9 @@
 
 ## Authentication
 **Kind**: global class  
-**Parm**: <code>String</code> tokenSecret  
 
 * [Authentication](#Authentication)
-    * [new Authentication(metadata)](#new_Authentication_new)
+    * [new Authentication(tokenSecret, metadata)](#new_Authentication_new)
     * _instance_
         * [.isEnabled](#Authentication+isEnabled) : <code>Boolean</code>
         * [.isFirstEnable](#Authentication+isFirstEnable) : <code>Boolean</code>
@@ -24,12 +23,13 @@
 
 <a name="new_Authentication_new"></a>
 
-### new Authentication(metadata)
+### new Authentication(tokenSecret, metadata)
 Authentication interface
 
 
 | Param | Type |
 | --- | --- |
+| tokenSecret | <code>String</code> | 
 | metadata | <code>Object</code> | 
 
 <a name="Authentication+isEnabled"></a>

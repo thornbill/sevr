@@ -1,7 +1,7 @@
 # Sevr CMS Framework Documentation
 
 ## Table of Contents
-1. [Sevr](core)
+1. [Getting Started](getting-started.md)
 2. [Collections](collections.md)
 3. [Types](types.md)
 4. [Plugins](plugins.md)
