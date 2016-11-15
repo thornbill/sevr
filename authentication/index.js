@@ -127,13 +127,14 @@ class Authentication {
 		this._collection.extendFieldSchema('password', 'select', false)
 		this._enabled = true
 		
-		this._collection.attachHook('post', 'save', next => {
+		this._collection.attachHook('post', 'save', (doc, next) => {
 			// Remove first enable flag after credentials are added to the db
 			if (this.isFirstEnable) {
 				this._metadata.put('initialAuthEnable', false)
 					.then(() => { next() })
 					.catch(next)
 			}
+			next()
 		})
 
 		const initialAuthEnable = this._metadata.get('initialAuthEnable')
