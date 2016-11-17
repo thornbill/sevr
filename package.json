@@ -50,5 +50,8 @@
     "chai-spies": "^0.7.1",
     "jsdoc-to-markdown": "^2.0.1",
     "mocha": "^2.4.5"
+  },
+  "engines": {
+    "node": ">=6.0.0"
   }
 }
