@@ -144,14 +144,14 @@ describe('Collection', function() {
 			expect(Collection.isValidField({
 				label: 'Text',
 				schemaType: { type: String }
-			}, errors)).to.be.true
+			}, 'test', errors)).to.be.true
 		})
 
 		it('should return false for when `label` is missing', function() {
 			let errors = []
 			expect(Collection.isValidField({
 				schemaType: { type: String }
-			}, errors)).to.be.false
+			}, 'test', errors)).to.be.false
 			expect(errors).to.have.length(2)
 		})
 
@@ -159,7 +159,7 @@ describe('Collection', function() {
 			let errors = []
 			expect(Collection.isValidField({
 				label: 'Text'
-			}, errors)).to.be.false
+			}, 'test', errors)).to.be.false
 
 			expect(errors).to.have.length(2)
 		})
