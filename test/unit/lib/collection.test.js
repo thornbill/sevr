@@ -165,6 +165,32 @@ describe('Collection', function() {
 		})
 	})
 
+	describe('isValidFieldRef()', function() {
+		it('should return true for valid field definition', function() {
+			let errors = []
+			expect(Collection.isValidFieldRef({
+				label: 'Text',
+				schemaType: { 
+					type: mongoose.Schema.Types.ObjectId,
+	                ref: 'User'
+	            }
+			}, 'test', ['User'], errors)).to.be.true
+		})
+		
+		it('should return false for when `ref` is not a collection', function() {
+			let errors = []
+			expect(Collection.isValidFieldRef({
+				label: 'Text',
+				schemaType: { 
+					type: mongoose.Schema.Types.ObjectId,
+	                ref: 'User'
+	            }
+			}, 'test', ['Test'], errors)).to.be.false
+			
+			expect(errors).to.have.length(1)
+		})
+	})
+
 	describe('getFieldRef()', function() {
 		it('should return the ref when schemaType is an object', function() {
 			expect(Collection.getFieldRef({

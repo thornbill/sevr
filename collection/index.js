@@ -107,6 +107,7 @@ class Collection {
 	 * Check if a field definition is valid
 	 * 
 	 * @param  {Object} fieldDef
+	 * @param  {String} fieldName
 	 * @param  {Array} errors
 	 * @return {Boolean}
 	 * @static
@@ -135,6 +136,35 @@ class Collection {
 			}
 		})
 
+		return isValid
+	}
+
+
+	/**
+	 * Check if a field definition model reference is valid
+	 * 
+	 * @param  {Object} fieldDef
+	 * @param  {String} fieldName
+	 * @param  {Array} modelNames
+	 * @param  {Array} errors
+	 * @return {Boolean}
+	 * @static
+	 */
+	static isValidFieldRef(fieldDef, fieldName, modelNames, errors) {
+		let isValid = true
+		let ref = null
+		
+		if (Array.isArray(fieldDef.schemaType)) {
+			ref = fieldDef.schemaType[0].ref
+		} else {
+			ref = fieldDef.schemaType.ref
+		}
+		
+		if(ref && !modelNames.includes(ref)){
+			isValid = false
+			errors.push(format('`%s` field model reference is invalid. Model `%s` not found', fieldName, ref))
+		}
+		
 		return isValid
 	}
 
