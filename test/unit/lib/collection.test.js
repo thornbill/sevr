@@ -172,8 +172,8 @@ describe('Collection', function() {
 				label: 'Text',
 				schemaType: { 
 					type: mongoose.Schema.Types.ObjectId,
-	                ref: 'User'
-	            }
+					ref: 'User'
+				}
 			}, 'test', ['User'], errors)).to.be.true
 		})
 		
@@ -181,10 +181,10 @@ describe('Collection', function() {
 			let errors = []
 			expect(Collection.isValidFieldRef({
 				label: 'Text',
-				schemaType: { 
+				schemaType: {
 					type: mongoose.Schema.Types.ObjectId,
-	                ref: 'User'
-	            }
+					ref: 'User'
+				}
 			}, 'test', ['Test'], errors)).to.be.false
 			
 			expect(errors).to.have.length(1)
