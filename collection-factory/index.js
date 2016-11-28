@@ -1,5 +1,6 @@
 'use strict'
 
+const format        = require('util').format
 const _          = require('lodash')
 const Collection = require('../collection')
 
@@ -33,6 +34,24 @@ class CollectionFactory {
 			this._definitions[key].name = key
 			this._instances[key] = this.getInstance(key)
 		}
+		
+		// Gather Model Names
+		let modelNames = []
+		Object.keys(this._instances).map((key) => {
+			modelNames.push(this._instances[key]._definition.singular)
+		})
+		
+		// Validate Field Model References
+		for (let key in this._instances) {
+			let errors = []
+			for (let field in this._instances[key]._definition.fields){
+				if(!Collection.isValidFieldRef(this._instances[key]._definition.fields[field], field, modelNames, errors)){
+					if(errors.length > 0)
+						throw new Error(format('`%s` collection %s', key, errors[0]))
+				}
+			}
+		}
+		
 	}
 
 	/**

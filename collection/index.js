@@ -34,16 +34,25 @@ class Collection {
 		this._factory = factory
 		this._connection = this._factory.connection
 
+		// Validate Collection Definiton
+		let defErrors = []
+		if (!Collection.isValidDefinition(this._definition, defErrors)){
+			if(defErrors.length > 0)
+				throw new Error(format('`%s` collection %s', this._name, defErrors[0]))
+		}
+		// Validate Collection fields
+		for(let field in this._definition.fields) {
+			if (!Collection.isValidField(this._definition.fields[field], field, defErrors)){
+				if(defErrors.length > 0)
+					throw new Error(format('`%s` collection %s', this._name, defErrors[0]))
+			}
+		}
+
 		// Normalize definition fields by adding a name property
 		// tht matches the field key
 		Object.keys(this._definition.fields).forEach(key => {
 			this._definition.fields[key].name = key
 		})
-
-		// Check for required properties
-		if (!this._definition.hasOwnProperty('singular')) {
-			throw new Error(format('Collection `%s` must contain `singular` property', this._name))
-		}
 
 		// Create the mongoose model
 		try {
@@ -85,7 +94,7 @@ class Collection {
 			})
 
 			if (!validType) {
-				errors.push(format('`%s` must be of type %s', required.prop, requiredTypes))
+				errors.push(format('`%s` property must be of type [%s]', required.prop, requiredTypes))
 				isValid = false
 			}
 		})
@@ -98,16 +107,17 @@ class Collection {
 	 * Check if a field definition is valid
 	 * 
 	 * @param  {Object} fieldDef
+	 * @param  {String} fieldName
 	 * @param  {Array} errors
 	 * @return {Boolean}
 	 * @static
 	 */
-	static isValidField(fieldDef, errors) {
+	static isValidField(fieldDef, fieldName, errors) {
 		let isValid = true
 
 		requiredProperties.field.forEach(required => {
 			if (!fieldDef.hasOwnProperty(required.prop)) {
-				errors.push(format('field must contain `%s` property', required.prop))
+				errors.push(format('`%s` field must contain `%s` property', fieldName, required.prop))
 				isValid = false
 			}
 
@@ -121,11 +131,40 @@ class Collection {
 			})
 
 			if (!validType) {
-				errors.push(format('`%s` must be of type %s', required.prop, requiredTypes))
+				errors.push(format('`%s` field `%s` property must be of type [%s]', fieldName, required.prop, requiredTypes))
 				isValid = false
 			}
 		})
 
+		return isValid
+	}
+
+
+	/**
+	 * Check if a field definition model reference is valid
+	 * 
+	 * @param  {Object} fieldDef
+	 * @param  {String} fieldName
+	 * @param  {Array} modelNames
+	 * @param  {Array} errors
+	 * @return {Boolean}
+	 * @static
+	 */
+	static isValidFieldRef(fieldDef, fieldName, modelNames, errors) {
+		let isValid = true
+		let ref = null
+		
+		if (Array.isArray(fieldDef.schemaType)) {
+			ref = fieldDef.schemaType[0].ref
+		} else {
+			ref = fieldDef.schemaType.ref
+		}
+		
+		if(ref && !modelNames.includes(ref)){
+			isValid = false
+			errors.push(format('`%s` field model reference is invalid. Model `%s` not found', fieldName, ref))
+		}
+		
 		return isValid
 	}
 
