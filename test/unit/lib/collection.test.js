@@ -5,6 +5,7 @@ const chai            = require('chai')
 const chaiAsPromised  = require('chai-as-promised')
 const spies           = require('chai-spies')
 const mongoose        = require('mongoose')
+const mockgoose       = require('mockgoose')
 const Collection      = require('../../../collection')
 const collectionDefs  = require('../../fixtures/collections')
 const config          = require('../../fixtures/sevr-config')
@@ -59,42 +60,45 @@ describe('Collection', function() {
 
 	let db
 	let factory = {
-		connection: null
+		connection: null,
+		getInstanceWithModel: function() {
+			return { model: {} }
+		}
 	}
 
-	before(function() {
-		db = mongoose.createConnection(`mongodb://${config.connection.host}:${config.connection.port}/${config.connection.database}`)
-		factory.connection = db
-	})
-
-	after(function() {
-		db.close()
-	})
-
 	describe('constructor()', function() {
-		let testCollection
-
-		before(function() {
-			testCollection = new Collection('test1', fixtures.definitions.test1, factory)
+		beforeEach(function(done) {
+			mockgoose(mongoose)
+				.then(() => {
+					mongoose.connect('mongodb://testing', err => {
+						factory.connection = mongoose.connection
+						done(err)
+					})
+				})
 		})
 
-		after(function() {
-			delete db.models['Test1']
+		afterEach(function(done) {
+			delete mongoose.connection.models['Test1']
+			mongoose.unmock(done)
 		})
 
 		it('should set the collection name', function() {
+			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
 			expect(testCollection.name).to.equal('test1')
 		})
 
 		it('should set the definition', function() {
+			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
 			expect(testCollection.definition).to.be.instanceof(Object)
 		})
 
 		it('should set the model name to the singular property', function() {
+			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
 			expect(testCollection.modelName).to.equal(fixtures.definitions.test1.singular)
 		})
 
 		it('should set the population fields', function() {
+			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
 			const populationFields = testCollection.populationFields
 			expect(populationFields).to.be.instanceof(Array)
 			expect(populationFields).to.eql(['field2'])
@@ -212,36 +216,36 @@ describe('Collection', function() {
 	})
 
 	describe('getField()', function() {
-		let testCollection
-
-		before(function() {
-			testCollection = new Collection('test1', fixtures.definitions.test1, {
-				getInstanceWithModel: function() {
-					return {
-						model: {}
-					}
-				},
-				connection: factory.connection
-			})
+		beforeEach(function(done) {
+			mockgoose(mongoose)
+				.then(() => {
+					mongoose.connect('mongodb://testing', err => {
+						factory.connection = mongoose.connection
+						done(err)
+					})
+				})
 		})
 
-		after(function() {
-			delete db.models['Test1']
-			db.db.dropDatabase()
+		afterEach(function(done) {
+			delete mongoose.connection.models['Test1']
+			mongoose.unmock(done)
 		})
 
 		it('should return a field object', function() {
+			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
 			const field = testCollection.getField('field1')
 			expect(field).to.be.instanceof(Object)
 		})
 
 		it('should return a field object with referenceModel', function() {
+			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
 			const field = testCollection.getField('field2')
 			expect(field).to.be.instanceof(Object)
 			expect(field).to.haveOwnProperty('referenceModel')
 		})
 
 		it('should flatten the field if nested and enabled', function() {
+			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
 			const field3 = testCollection.getField('field3', true)
 			expect(field3).to.be.instanceof(Array)
 			expect(field3).to.have.deep.property('[0].name', 'field3.first')
@@ -250,6 +254,7 @@ describe('Collection', function() {
 		})
 
 		it('should not flatten fields that store arrays of values', function() {
+			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
 			const field4 = testCollection.getField('field4', true)
 			expect(field4).to.be.instanceof(Object)
 			expect(field4.name).to.eql('field4')
@@ -257,25 +262,23 @@ describe('Collection', function() {
 	})
 
 	describe('getFields()', function() {
-		let testCollection
-
-		before(function() {
-			testCollection = new Collection('test1', fixtures.definitions.test1, {
-				getInstanceWithModel: function() {
-					return {
-						model: {}
-					}
-				},
-				connection: factory.connection
-			})
+		beforeEach(function(done) {
+			mockgoose(mongoose)
+				.then(() => {
+					mongoose.connect('mongodb://testing', err => {
+						factory.connection = mongoose.connection
+						done(err)
+					})
+				})
 		})
 
-		after(function() {
-			delete db.models['Test1']
-			db.db.dropDatabase()
+		afterEach(function(done) {
+			delete mongoose.connection.models['Test1']
+			mongoose.unmock(done)
 		})
 
 		it('should return all field definitions', function() {
+			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
 			const fields = testCollection.getFields()
 			expect(fields).to.be.instanceOf(Object)
 			expect(fields).to.haveOwnProperty('field1')
@@ -283,6 +286,7 @@ describe('Collection', function() {
 		})
 
 		it('should flatten all nested fields if enabled', function() {
+			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
 			const fields = testCollection.getFields(true)
 
 			expect(fields).to.be.instanceOf(Object)
@@ -300,25 +304,23 @@ describe('Collection', function() {
 	})
 
 	describe('inflateFields()', function() {
-		let testCollection
-
-		before(function() {
-			testCollection = new Collection('test1', fixtures.definitions.test1, {
-				getInstanceWithModel: function() {
-					return {
-						model: {}
-					}
-				},
-				connection: factory.connection
-			})
+		beforeEach(function(done) {
+			mockgoose(mongoose)
+				.then(() => {
+					mongoose.connect('mongodb://testing', err => {
+						factory.connection = mongoose.connection
+						done(err)
+					})
+				})
 		})
 
-		after(function() {
-			delete db.models['Test1']
-			db.db.dropDatabase()
+		afterEach(function(done) {
+			delete mongoose.connection.models['Test1']
+			mongoose.unmock(done)
 		})
 
 		it('should expand flattened fields', function() {
+			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
 			const fieldsFlat = {
 				'field1': {
 					label: 'Field1',
@@ -352,10 +354,23 @@ describe('Collection', function() {
 	})
 
 	describe('getFieldTypeName()', function() {
-		let testCollection
+		beforeEach(function(done) {
+			mockgoose(mongoose)
+				.then(() => {
+					mongoose.connect('mongodb://testing', err => {
+						factory.connection = mongoose.connection
+						done(err)
+					})
+				})
+		})
 
-		before(function() {
-			testCollection = new Collection('test1', {
+		afterEach(function(done) {
+			delete mongoose.connection.models['Test1']
+			mongoose.unmock(done)
+		})
+
+		it('should return the type name if schemaType is object', function() {
+			const testCollection = new Collection('test1', {
 				singular: 'Test1',
 				fields: {
 					field1: {
@@ -368,27 +383,47 @@ describe('Collection', function() {
 					}
 				}
 			}, factory)
-		})
 
-		after(function() {
-			delete db.models['Test1']
-			db.db.dropDatabase()
-		})
-
-		it('should return the type name if schemaType is object', function() {
 			expect(testCollection.getFieldTypeName('field1')).to.equal('stringType')
 		})
 
 		it('should return the type name if schemaType is array', function() {
+			const testCollection = new Collection('test1', {
+				singular: 'Test1',
+				fields: {
+					field1: {
+						label: 'name',
+						schemaType: { name: 'stringType', type: String }
+					},
+					field2: {
+						label: 'email',
+						schemaType: [{ name: 'emailType', type: String }]
+					}
+				}
+			}, factory)
+
 			expect(testCollection.getFieldTypeName('field2')).to.equal('emailType')
 		})
 	})
 
 	describe('getFieldTypes()', function() {
-		let testCollection
+		beforeEach(function(done) {
+			mockgoose(mongoose)
+				.then(() => {
+					mongoose.connect('mongodb://testing', err => {
+						factory.connection = mongoose.connection
+						done(err)
+					})
+				})
+		})
 
-		before(function() {
-			testCollection = new Collection('test1', {
+		afterEach(function(done) {
+			delete mongoose.connection.models['Test1']
+			mongoose.unmock(done)
+		})
+
+		it('should return an array of type values', function() {
+			const testCollection = new Collection('test1', {
 				singular: 'Test1',
 				fields: {
 					field1: {
@@ -408,14 +443,7 @@ describe('Collection', function() {
 					}
 				}
 			}, factory)
-		})
 
-		after(function() {
-			delete db.models['Test1']
-			db.db.dropDatabase()
-		})
-
-		it('should return an array of type values', function() {
 			expect(testCollection.getFieldTypes('field1')).to.eql([
 				'field1',
 				'stringType',
@@ -429,6 +457,27 @@ describe('Collection', function() {
 		})
 
 		it('should include "COMPLEX" for fields with nested values', function() {
+			const testCollection = new Collection('test1', {
+				singular: 'Test1',
+				fields: {
+					field1: {
+						label: 'name',
+						schemaType: { name: 'stringType', type: String }
+					},
+					field2: {
+						label: 'email',
+						schemaType: [{ name: 'emailType', type: mongoose.Schema.Types.String }]
+					},
+					field3: {
+						label: 'full name',
+						schemaType: {
+							first: { name: 'text', label: 'First', type: String },
+							last: { name: 'text', label: 'Last', type: String }
+						}
+					}
+				}
+			}, factory)
+
 			expect(testCollection.getFieldTypes('field3')).to.eql([
 				'field3',
 				'COMPLEX'
@@ -437,26 +486,32 @@ describe('Collection', function() {
 	})
 
 	describe('getMeta()', function() {
-		let collectionWithMeta
-		let collectionWithoutMeta
-
-		before(function() {
-			collectionWithMeta = new Collection('users', collectionDefs.users, factory)
-			collectionWithoutMeta = new Collection('posts', collectionDefs.posts, factory)
+		beforeEach(function(done) {
+			mockgoose(mongoose)
+				.then(() => {
+					mongoose.connect('mongodb://testing', err => {
+						factory.connection = mongoose.connection
+						done(err)
+					})
+				})
 		})
 
-		after(function() {
-			delete db.models['User']
-			delete db.models['Post']
-			db.db.dropDatabase()
+		afterEach(function(done) {
+			delete mongoose.connection.models['User']
+			delete mongoose.connection.models['Post']
+			mongoose.unmock(done)
 		})
 
 		it('should return the meta property specified', function() {
+			const collectionWithMeta = new Collection('users', collectionDefs.users, factory)
+
 			expect(collectionWithMeta.getMeta('description'))
 				.to.equal(collectionDefs.users.meta.description)
 		})
 
 		it('should return all meta data if none specified', function() {
+			const collectionWithMeta = new Collection('users', collectionDefs.users, factory)
+
 			expect(collectionWithMeta.getMeta()).to.eql(collectionDefs.users.meta)
 			expect(collectionWithMeta.getMeta()).to.not.equal(collectionDefs.users.meta)
 
@@ -464,10 +519,14 @@ describe('Collection', function() {
 		})
 
 		it('should return undefined if property does not exist', function() {
+			const collectionWithMeta = new Collection('users', collectionDefs.users, factory)
+
 			expect(collectionWithMeta.getMeta('foo')).to.be.undefined
 		})
 
 		it('should return undefined if no metadata exists', function() {
+			const collectionWithoutMeta = new Collection('posts', collectionDefs.posts, factory)
+
 			expect(collectionWithoutMeta.getMeta()).to.be.undefined
 			expect(collectionWithoutMeta.getMeta('description')).to.be.undefined
 
@@ -476,11 +535,24 @@ describe('Collection', function() {
 	})
 
 	describe('defaultField()', function() {
-		let testCollection1
-		let testCollection2
+		beforeEach(function(done) {
+			mockgoose(mongoose)
+				.then(() => {
+					mongoose.connect('mongodb://testing', err => {
+						factory.connection = mongoose.connection
+						done(err)
+					})
+				})
+		})
 
-		before(function() {
-			testCollection1 = new Collection('test1', {
+		afterEach(function(done) {
+			delete mongoose.connection.models['Test1']
+			delete mongoose.connection.models['Test2']
+			mongoose.unmock(done)
+		})
+
+		it('should return the definition property `defaultField` if present', function() {
+			const testCollection1 = new Collection('test1', {
 				singular: 'Test1',
 				fields: {
 					name: {
@@ -491,7 +563,11 @@ describe('Collection', function() {
 				defaultField: 'name'
 			}, factory)
 
-			testCollection2 = new Collection('test2', {
+			expect(testCollection1.defaultField).to.eql('name')
+		})
+
+		it('should return `_id` if `defaultField` is not defined', function() {
+			const testCollection2 = new Collection('test2', {
 				singular: 'Test2',
 				fields: {
 					email: {
@@ -500,28 +576,29 @@ describe('Collection', function() {
 					}
 				}
 			}, factory)
-		})
 
-		after(function() {
-			delete db.models['Test1']
-			delete db.models['Test2']
-			db.db.dropDatabase()
-		})
-
-		it('should return the definition property `defaultField` if present', function() {
-			expect(testCollection1.defaultField).to.eql('name')
-		})
-
-		it('should return `_id` if `defaultField` is not defined', function() {
 			expect(testCollection2.defaultField).to.eql('_id')
 		})
 	})
 
 	describe('addField()', function() {
-		let coll
+		beforeEach(function(done) {
+			mockgoose(mongoose)
+				.then(() => {
+					mongoose.connect('mongodb://testing', err => {
+						factory.connection = mongoose.connection
+						done(err)
+					})
+				})
+		})
 
-		before(function() {
-			coll = new Collection('coll', {
+		afterEach(function(done) {
+			delete mongoose.connection.models['Collection']
+			mongoose.unmock(done)
+		})
+		
+		it('should add a new path to the schema', function() {
+			const coll = new Collection('coll', {
 				singular: 'Collection',
 				fields: {
 					field1: {
@@ -530,20 +607,23 @@ describe('Collection', function() {
 					}
 				}
 			}, factory)
-		})
 
-		after(function() {
-			delete db.models['Collection']
-			db.db.dropDatabase()
-		})
-
-		it('should add a new path to the schema', function() {
 			coll.addField('field2', 'Field2', String)
 
 			expect(coll.schema.path('field2')).to.not.be.undefined
 		})
 
 		it('should add a field to the collection definition', function() {
+			const coll = new Collection('coll', {
+				singular: 'Collection',
+				fields: {
+					field1: {
+						label: 'Field1',
+						schemaType: String
+					}
+				}
+			}, factory)
+
 			coll.addField('field2', 'Field2', String)
 
 			expect(coll.definition).to.have.deep.property('fields.field2')
@@ -553,23 +633,27 @@ describe('Collection', function() {
 	})
 
 	describe('attachHook', function () {
-		let users
-
-		before(function() {
-			// ModelFactory.flush()
-			users = new Collection('users', collectionDefs.users, factory)
+		beforeEach(function(done) {
+			mockgoose(mongoose)
+				.then(() => {
+					mongoose.connect('mongodb://testing', err => {
+						factory.connection = mongoose.connection
+						done(err)
+					})
+				})
 		})
 
-		after(function() {
-			delete db.models['User']
-			db.db.dropDatabase()
+		afterEach(function(done) {
+			delete mongoose.connection.models['User']
+			mongoose.unmock(done)
 		})
 
 		it('should add a pre hook', function() {
+			const users = new Collection('users', collectionDefs.users, factory)
 			const hook = chai.spy((next) => { next() })
 
 			users.attachHook('pre', 'save', hook)
-			return users.model.create({
+			return users.create({
 				username: 'testUser',
 				email: 'test@testerson.com'
 			}).then(() => {
@@ -578,6 +662,7 @@ describe('Collection', function() {
 		})
 
 		it('should add a post hook', function() {
+			const users = new Collection('users', collectionDefs.users, factory)
 			const hook = chai.spy((doc, next) => { next() })
 
 			users.attachHook('post', 'save', hook)
@@ -590,6 +675,7 @@ describe('Collection', function() {
 		})
 
 		it('should throw an error if `when` is not "pre" or "post"', function() {
+			const users = new Collection('users', collectionDefs.users, factory)
 			const hook = chai.spy((doc, next) => { next() })
 			const fn = () => { users.attachHook('foo', 'save', hook) }
 
@@ -598,97 +684,163 @@ describe('Collection', function() {
 	})
 
 	describe('CRUD operations', function() {
-		let usersCollection
-		let postsCollection
 		let ids = [
 			new mongoose.Types.ObjectId(),
 			new mongoose.Types.ObjectId()
 		]
 
-		before(function(done) {
-			usersCollection = new Collection('users', collectionDefs.users, factory)
-			postsCollection = new Collection('posts', collectionDefs.posts, factory)
-
-			usersCollection.model.create([
-				{
-					_id: ids[0],
-					username: 'testDoc',
-					email: 'test@doc.com'
-				},
-				{
-					_id: ids[1],
-					username: 'johndoe',
-					email: 'jdoe@gmail.com'
-				}
-			], (err) => {
-				done(err)
-			})
-		})
-
-		after(function() {
-			delete db.models['User']
-			delete db.models['Post']
-			db.db.dropDatabase()
-		})
-
 		describe('readById()', function() {
-			let postId
+			beforeEach(function(done) {
+				mockgoose(mongoose)
+					.then(() => {
+						mongoose.connect('mongodb://testing', err => {
+							factory.connection = mongoose.connection
+							done(err)
+						})
+					})
+			})
 
-			before(function(done) {
-				postsCollection.model.create({
-					title: 'Test Post',
-					author: ids[0]
-				}, (err, doc) => {
-					postId = doc._id
-					done(err)
-				})
+			afterEach(function(done) {
+				delete mongoose.connection.models['posts']
+				mongoose.unmock(done)
 			})
 
 			it('should return a promise', function() {
+				const usersCollection = new Collection('users', collectionDefs.users, factory)
+
 				expect(usersCollection.readById(12345)).to.be.instanceof(Promise)
 			})
 
 			it('should return a query', function() {
+				const usersCollection = new Collection('users', collectionDefs.users, factory)
+
 				expect(usersCollection.readById(12345, null, null, true)).to.be.instanceof(mongoose.Query)
 			})
 
 			it('should resolve with a single document', function() {
-				const result = usersCollection.readById(ids[0].toString())
+				const usersCollection = new Collection('users', collectionDefs.users, factory)
 
-				return Promise.all([
-					expect(result).to.eventually.have.property('username', 'testDoc'),
-					expect(result).to.eventually.have.property('email', 'test@doc.com')
-				])
+				return usersCollection.model
+					.create([
+						{
+							_id: ids[0],
+							username: 'testDoc',
+							email: 'test@doc.com'
+						},
+						{
+							_id: ids[1],
+							username: 'johndoe',
+							email: 'jdoe@gmail.com'
+						}
+					])
+					.then(() => {
+						return usersCollection.readById(ids[0].toString())
+					})
+					.then(result => {
+						expect(result).to.have.property('username', 'testDoc')
+						expect(result).to.have.property('email', 'test@doc.com')
+					})
 			})
 
 			it('should include populated fields with resolved document', function() {
-				const result = postsCollection.readById(postId, null, true)
+				const usersCollection = new Collection('users', collectionDefs.users, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
 
-				return Promise.all([
-					expect(result).to.eventually.have.deep.property('author.username', 'testDoc'),
-					expect(result).to.eventually.have.deep.property('author.email', 'test@doc.com')
-				])
+				return usersCollection.model
+					.create([
+						{
+							_id: ids[0],
+							username: 'testDoc',
+							email: 'test@doc.com'
+						},
+						{
+							_id: ids[1],
+							username: 'johndoe',
+							email: 'jdoe@gmail.com'
+						}
+					])
+					.then(() => {
+						return postsCollection.model
+							.create({
+								title: 'Test Post',
+								author: ids[0]
+							})
+					})
+					.then(doc => {
+						return postsCollection.readById(doc._id, null, true)
+					})
+					.then(result => {
+						expect(result).to.have.deep.property('author.username', 'testDoc')
+						expect(result).to.have.deep.property('author.email', 'test@doc.com')
+					})
 			})
 
 			it('should not include fields where `select` is false in document', function() {
-				const result = postsCollection.readById(postId, null, true)
+				const usersCollection = new Collection('users', collectionDefs.users, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
 
-				return result
+				return usersCollection.model
+					.create([
+						{
+							_id: ids[0],
+							username: 'testDoc',
+							email: 'test@doc.com'
+						},
+						{
+							_id: ids[1],
+							username: 'johndoe',
+							email: 'jdoe@gmail.com'
+						}
+					])
+					.then(() => {
+						return postsCollection.model
+							.create({
+								title: 'Test Post',
+								author: ids[0]
+							})
+					})
+					.then(doc => {
+						return postsCollection.readById(doc._id, null, true)
+					})
 					.then(post => {
 						expect(post.version).to.be.undefined
 					})
 			})
 
 			it('should include selected fields when overriding `select` from schema', function() {
-				const result = postsCollection.readById(postId, '+version', true)
+				const usersCollection = new Collection('users', collectionDefs.users, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
 
-				return result
+				return usersCollection.model
+					.create([
+						{
+							_id: ids[0],
+							username: 'testDoc',
+							email: 'test@doc.com'
+						},
+						{
+							_id: ids[1],
+							username: 'johndoe',
+							email: 'jdoe@gmail.com'
+						}
+					])
+					.then(() => {
+						return postsCollection.model
+							.create({
+								title: 'Test Post',
+								author: ids[0]
+							})
+					})
+					.then(doc => {
+						return postsCollection.readById(doc._id, '+version', true)
+					})
 					.then(post => {
 						expect(post.version).to.equal(1)
 					})
 			})
 
 			it('should resolve with null when no matching id', function() {
+				const usersCollection = new Collection('users', collectionDefs.users, factory)
 				const result = usersCollection.readById(new mongoose.Types.ObjectId())
 
 				return expect(result).to.eventually.be.null
@@ -696,7 +848,25 @@ describe('Collection', function() {
 		})
 
 		describe('create()', function() {
+			beforeEach(function(done) {
+				mockgoose(mongoose)
+					.then(() => {
+						mongoose.connect('mongodb://testing', err => {
+							factory.connection = mongoose.connection
+							done(err)
+						})
+					})
+			})
+
+			afterEach(function(done) {
+				delete mongoose.connection.models['posts']
+				mongoose.unmock(done)
+			})
+
 			it('should return a promise', function() {
+				const usersCollection = new Collection('users', collectionDefs.users, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+
 				const result = postsCollection.create({
 					title: 'Test 1',
 					content: 'Test 1 content',
@@ -707,196 +877,388 @@ describe('Collection', function() {
 			})
 
 			it('should resolve with the new document', function() {
-				const result = postsCollection.create({
-					title: 'Test 2',
-					content: 'Test 2 content',
-					author: ids[0]
-				})
+				const usersCollection = new Collection('users', collectionDefs.users, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
 
-				return Promise.all([
-					expect(result).to.eventually.have.deep.property('title', 'Test 2'),
-					expect(result).to.eventually.have.deep.property('content', 'Test 2 content'),
-					expect(result).to.eventually.have.deep.property('author.username', 'testDoc'),
-					expect(result).to.eventually.have.property('_id')
-				])
+				return usersCollection.model
+					.create([
+						{
+							_id: ids[0],
+							username: 'testDoc',
+							email: 'test@doc.com'
+						},
+						{
+							_id: ids[1],
+							username: 'johndoe',
+							email: 'jdoe@gmail.com'
+						}
+					])
+					.then(() => {
+						return postsCollection
+							.create({
+								title: 'Test 2',
+								content: 'Test 2 content',
+								author: ids[0]
+							})
+					})
+					.then(result => {
+						expect(result).to.have.deep.property('title', 'Test 2')
+						expect(result).to.have.deep.property('content', 'Test 2 content')
+						expect(result).to.have.deep.property('author.username', 'testDoc')
+						expect(result).to.have.property('_id')
+					})
 			})
 
 			it('should reject with validation errors', function(done) {
-				const result = postsCollection.create({
-					content: 'No title content',
-					author: ids[0]
-				})
+				const usersCollection = new Collection('users', collectionDefs.users, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
 
-				result.catch(err => {
-					expect(err).to.have.deep.property('errors.title')
-					done()
-				})
+				return usersCollection.model
+					.create([
+						{
+							_id: ids[0],
+							username: 'testDoc',
+							email: 'test@doc.com'
+						},
+						{
+							_id: ids[1],
+							username: 'johndoe',
+							email: 'jdoe@gmail.com'
+						}
+					])
+					.then(() => {
+						return postsCollection
+							.create({
+								content: 'No title content',
+								author: ids[0]
+							})
+					})
+					.then(() => done(true))
+					.catch(err => {
+						expect(err).to.have.deep.property('errors.title')
+						done()
+					})
 			})
 		})
 
 		describe('update()', function() {
-			it('should return a promise', function() {
-				const result = postsCollection.update([
-					{ title: 'test1', content: '', author: ids[0] }
-				])
+			beforeEach(function(done) {
+				mockgoose(mongoose)
+					.then(() => {
+						mongoose.connect('mongodb://testing', err => {
+							factory.connection = mongoose.connection
+							done(err)
+						})
+					})
+			})
 
-				expect(result).to.be.instanceof(Promise)
-				return result
+			afterEach(function(done) {
+				delete mongoose.connection.models['posts']
+				mongoose.unmock(done)
+			})
+
+			it('should return a promise', function() {
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				
+				return postsCollection.model
+					.create({
+						title: 'Initial Document',
+						content: '',
+						author: ids[0]
+					})
+					.then(() => {
+						const result = postsCollection.update([
+							{ title: 'test1', content: '', author: ids[0] }
+						])
+
+						expect(result).to.be.instanceof(Promise)
+					})
 			})
 
 			it('should resolve with the updated collection', function() {
-				const result = postsCollection.update([
-					{ title: 'test1', content: '', author: ids[0] }
-				])
-
-				return Promise.all([
-					expect(result).to.eventually.be.instanceof(Array),
-					expect(result).to.eventually.have.deep.property('[0].title', 'test1'),
-					expect(result).to.eventually.have.deep.property('[0].content', '')
-				])
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				
+				return postsCollection.model
+					.create({
+						title: 'Initial Document',
+						content: '',
+						author: ids[0]
+					})
+					.then(() => {
+						return postsCollection.update([
+							{ title: 'test1', content: '', author: ids[0] }
+						])
+					})
+					.then(result => {
+						expect(result).to.be.instanceof(Array)
+						expect(result).to.have.deep.property('[0].title', 'test1')
+						expect(result).to.have.deep.property('[0].content', '')
+					})
 			})
 
 			it('should overwrite the existing documents', function() {
-				const result = postsCollection.update([
-					{ title: 'test2', content: '', author: ids[0] }
-				])
-				.then(function() {
-					return postsCollection.model.find().exec()
-				})
-
-				return Promise.all([
-					expect(result).to.eventually.be.instanceof(Array),
-					expect(result).to.eventually.have.length(1),
-					expect(result).to.eventually.not.have.deep.property('[0].title', 'test1'),
-					expect(result).to.eventually.have.deep.property('[0].title', 'test2')
-				])
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				
+				return postsCollection.model
+					.create({
+						title: 'Initial Document',
+						content: '',
+						author: ids[0]
+					})
+					.then(() => {
+						return postsCollection.update([
+							{ title: 'test2', content: '', author: ids[0] }
+						])
+					})
+					.then(() => {
+						return postsCollection.model.find().exec()
+					})
+					.then(result => {
+						expect(result).to.be.instanceof(Array)
+						expect(result).to.have.length(1)
+						expect(result).to.not.have.deep.property('[0].title', 'test1')
+						expect(result).to.have.deep.property('[0].title', 'test2')
+					})
 			})
 
 			it('should reject with validation errors', function(done) {
-				const result = postsCollection.update([
-					{ content: '', author: ids[0] }
-				])
-
-				result.catch(err => {
-					expect(err).to.have.deep.property('errors.title')
-					done()
-				})
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				
+				return postsCollection.model
+					.create({
+						title: 'Initial Document',
+						content: '',
+						author: ids[0]
+					})
+					.then(() => {
+						return postsCollection.update([
+							{ content: '', author: ids[0] }
+						])
+					})
+					.then(() => {
+						done(true)
+					})
+					.catch(err => {
+						expect(err).to.have.deep.property('errors.title')
+						done()
+					})
 			})
 		})
 
 		describe('updateById()', function() {
-			let updateId
+			beforeEach(function(done) {
+				mockgoose(mongoose)
+					.then(() => {
+						mongoose.connect('mongodb://testing', err => {
+							factory.connection = mongoose.connection
+							done(err)
+						})
+					})
+			})
 
-			before(function(done) {
-				postsCollection.model.create({
-					title: 'Update Document',
-					content: '',
-					author: ids[0]
-				}, (err, doc) => {
-					updateId = doc._id
-					done()
-				})
+			afterEach(function(done) {
+				delete mongoose.connection.models['posts']
+				mongoose.unmock(done)
 			})
 
 			it('should return a promise', function() {
-				const result = postsCollection.updateById(updateId, {
-					content: 'test1'
-				})
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				
+				return postsCollection.model
+					.create({
+						title: 'Update Document',
+						content: '',
+						author: ids[0]
+					})
+					.then(doc => {
+						const result = postsCollection.updateById(doc._id, {
+							content: 'test1'
+						})
 
-				expect(result).to.be.instanceof(Promise)
+						expect(result).to.be.instanceof(Promise)
+					})
 			})
 
 			it('should resolve with the updated document', function() {
-				const result = postsCollection.updateById(updateId, {
-					content: 'test1'
-				})
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
 
-				return Promise.all([
-					expect(result).to.eventually.have.deep.property('title', 'Update Document'),
-					expect(result).to.eventually.have.deep.property('content', 'test1')
-				])
+				return postsCollection.model
+					.create({
+						title: 'Update Document',
+						content: '',
+						author: ids[0]
+					})
+					.then(doc => {
+						return postsCollection.updateById(doc._id, {
+							content: 'test1'
+						})
+					})
+					.then(result => {
+						expect(result).to.have.deep.property('title', 'Update Document')
+						expect(result).to.have.deep.property('content', 'test1')
+					})
 			})
 
 			it('should reject with validation errors', function(done) {
-				const result = postsCollection.updateById(updateId, {
-					content: 'foobar'
-				})
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
 
-				result.catch(err => {
-					expect(err).to.have.deep.property('errors.content')
-					expect(err).to.have.deep.property('errors.content.message', 'content must not equal foobar')
-					done()
-				})
+				return postsCollection.model
+					.create({
+						title: 'Update Document',
+						content: '',
+						author: ids[0]
+					})
+					.then(doc => {
+						return postsCollection.updateById(doc._id, {
+							content: 'foobar'
+						})
+					})
+					.then(() => {
+						done(true)
+					})
+					.catch(err => {
+						expect(err).to.have.deep.property('errors.content')
+						expect(err).to.have.deep.property('errors.content.message', 'content must not equal foobar')
+						done()
+					})
 			})
 		})
 
 		describe('del()', function() {
 			beforeEach(function(done) {
-				postsCollection.model.create([
-					{
-						title: 'Delete1',
-						author: ids[0]
-					},
-					{
-						title: 'Delete2',
-						author: ids[0]
-					}
-				], (err) => {
-					done(err)
-				})
+				mockgoose(mongoose)
+					.then(() => {
+						mongoose.connect('mongodb://testing', err => {
+							factory.connection = mongoose.connection
+							done(err)
+						})
+					})
+			})
+
+			afterEach(function(done) {
+				delete mongoose.connection.models['posts']
+				mongoose.unmock(done)
 			})
 
 			it('should return a promise', function() {
-				const result = postsCollection.del()
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
 
-				expect(result).to.eventually.be.instanceof(Promise)
+				return postsCollection.model
+					.create([
+						{
+							title: 'Delete1',
+							author: ids[0]
+						},
+						{
+							title: 'Delete2',
+							author: ids[0]
+						}
+					])
+					.then(() => {
+						const result = postsCollection.del()
+
+						expect(result).to.eventually.be.instanceof(Promise) 
+					})
 			})
 
 			it('should resolve with the deleted documents', function() {
-				const result = postsCollection.del()
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
 
-				return Promise.all([
-					expect(result).to.eventually.have.length(2),
-					expect(result).to.eventually.have.deep.property('[0].title', 'Delete1'),
-					expect(result).to.eventually.have.deep.property('[1].title', 'Delete2')
-				])
+				return postsCollection.model
+					.create([
+						{
+							title: 'Delete1',
+							author: ids[0]
+						},
+						{
+							title: 'Delete2',
+							author: ids[0]
+						}
+					])
+					.then(() => {
+						return postsCollection.del()
+					})
+					.then(result => {
+						expect(result).to.have.length(2)
+						expect(result).to.have.deep.property('[0].title', 'Delete1')
+						expect(result).to.have.deep.property('[1].title', 'Delete2')
+					})
 			})
 
 			it('should delete all documents from the collection', function() {
-				const result = postsCollection.del()
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
 
-				return result.then(function() {
-					return postsCollection.model.find().exec()
-				})
-				.then(docs => {
-					expect(docs).to.be.empty
-				})
+				return postsCollection.model
+					.create([
+						{
+							title: 'Delete1',
+							author: ids[0]
+						},
+						{
+							title: 'Delete2',
+							author: ids[0]
+						}
+					])
+					.then(() => {
+						return postsCollection.del()
+					})
+					.then(function() {
+						return postsCollection.model.find().exec()
+					})
+					.then(docs => {
+						expect(docs).to.be.empty
+					})
 			})
 		})
 
 		describe('delById()', function() {
-			let deleteId
-
 			beforeEach(function(done) {
-				postsCollection.model.create({
-					title: 'Delete1',
-					author: ids[0]
-				}, (err, doc) => {
-					deleteId = doc._id
-					done(err)
-				})
+				mockgoose(mongoose)
+					.then(() => {
+						mongoose.connect('mongodb://testing', err => {
+							factory.connection = mongoose.connection
+							done(err)
+						})
+					})
+			})
+
+			afterEach(function(done) {
+				delete mongoose.connection.models['posts']
+				mongoose.unmock(done)
 			})
 
 			it('should return a promise', function() {
-				const result = postsCollection.delById(deleteId)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
 
-				expect(result).to.be.instanceof(Promise)
+				return postsCollection.model
+					.create([
+						{
+							title: 'Delete1',
+							author: ids[0]
+						}
+					])
+					.then(doc => {
+						const result = postsCollection.delById(doc._id)
+
+						expect(result).to.be.instanceof(Promise)
+					})
 			})
 
 			it('should resolve with the deleted document', function() {
-				const result = postsCollection.delById(deleteId)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
 
-				return expect(result).to.eventually.have.deep.property('title', 'Delete1')
+				return postsCollection.model
+					.create({
+						title: 'Delete1',
+						content: '',
+						author: ids[0]
+					})
+					.then(doc => {
+						return postsCollection.delById(doc._id)
+					})
+					.then(result => {
+						expect(result).to.have.deep.property('title', 'Delete1')
+					})
 			})
 		})
 	})
