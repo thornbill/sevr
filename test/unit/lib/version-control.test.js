@@ -41,7 +41,7 @@ function createDocVersions(docModel, vcModel, docs) {
 
 describe('VersionControl', function() {
 	after(function() {
-		VersionControl._destroy()
+		// VersionControl._destroy()
 	})
 
 	describe('getVersions', function() {
@@ -68,14 +68,12 @@ describe('VersionControl', function() {
 				})
 			)
 
-			const vc = new VersionControl(connection)
-
-			return createDocVersions(model, vc.model, [
+			return createDocVersions(model, VersionControl.model, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' }
 			])
 			.then(id => {
-				return vc.getVersions(id)
+				return VersionControl.getVersions(id)
 			})
 			.then(versions => {
 				expect(versions).to.have.length(2)
@@ -93,14 +91,12 @@ describe('VersionControl', function() {
 				})
 			)
 
-			const vc = new VersionControl(connection)
-
-			return createDocVersions(model, vc.model, [
+			return createDocVersions(model, VersionControl.model, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' }
 			])
 			.then(doc => {
-				return vc.getVersions(doc._id)
+				return VersionControl.getVersions(doc._id)
 			})
 			.then(versions => {
 				expect(versions[0].doc).to.have.property('title', 'version test2')
@@ -132,15 +128,13 @@ describe('VersionControl', function() {
 				})
 			)
 
-			const vc = new VersionControl(connection)
-
-			return createDocVersions(model, vc.model, [
+			return createDocVersions(model, VersionControl.model, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' },
 				{ slug: 'test-two' }
 			])
 			.then(id => {
-				return vc.getLatest(id)
+				return VersionControl.getLatest(id)
 			})
 			.then(version => {
 				expect(version.doc).to.have.property('title', 'version test2')
@@ -173,18 +167,16 @@ describe('VersionControl', function() {
 				})
 			)
 
-			const vc = new VersionControl(connection)
-
-			return createDocVersions(model, vc.model, [
+			return createDocVersions(model, VersionControl.model, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' },
 				{ slug: 'test-two' }
 			])
 			.then(id => {
-				return vc.getVersions(id).then(versions => ({ id, versions }))
+				return VersionControl.getVersions(id).then(versions => ({ id, versions }))
 			})
 			.then(data => {
-				return vc.getVersion(data.id, data.versions[1].version._id)
+				return VersionControl.getVersion(data.id, data.versions[1].version._id)
 			})
 			.then(version => {
 				expect(version.doc).to.have.property('title', 'version test2')
@@ -217,14 +209,12 @@ describe('VersionControl', function() {
 				})
 			)
 
-			const vc = new VersionControl(connection)
-
-			return createDocVersions(model, vc.model, [
+			return createDocVersions(model, VersionControl.model, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' }
 			])
 			.then(id => {
-				return vc.getDiffs(id)
+				return VersionControl.getDiffs(id)
 			})
 			.then(diffs => {
 				expect(diffs).to.have.length(2)
@@ -259,14 +249,12 @@ describe('VersionControl', function() {
 				})
 			)
 
-			const vc = new VersionControl(connection)
-
-			return createDocVersions(model, vc.model, [
+			return createDocVersions(model, VersionControl.model, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' }
 			])
 			.then(id => {
-				return vc.getLatestDiff(id)
+				return VersionControl.getLatestDiff(id)
 			})
 			.then(diff => {
 				expect(diff).to.have.property('documentId')
@@ -302,18 +290,16 @@ describe('VersionControl', function() {
 				})
 			)
 
-			const vc = new VersionControl(connection)
-
-			return createDocVersions(model, vc.model, [
+			return createDocVersions(model, VersionControl.model, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' },
 				{ slug: 'test-two' }
 			])
 			.then(id => {
-				return vc.getVersions(id).then(versions => ({ id, versions }))
+				return VersionControl.getVersions(id).then(versions => ({ id, versions }))
 			})
 			.then(data => {
-				return vc.getVersionDiff(data.versions[1].version._id)
+				return VersionControl.getVersionDiff(data.versions[1].version._id)
 			})
 			.then(diff => {
 				expect(diff).to.have.property('documentId')
@@ -349,14 +335,12 @@ describe('VersionControl', function() {
 				})
 			)
 
-			const vc = new VersionControl(connection)
-
 			return model
 				.create({ title: 'new version test', slug: 'new-version-test' })
 				.then(doc => {
-					return vc.saveVersion(doc._id, doc)
+					return VersionControl.saveVersion(doc._id, doc)
 						.then(() => {
-							return vc.getVersions(doc._id)
+							return VersionControl.getVersions(doc._id)
 						})
 						.then(versions => {
 							expect(versions).to.have.length(1)
@@ -373,12 +357,10 @@ describe('VersionControl', function() {
 				})
 			)
 
-			const vc = new VersionControl(connection)
-
 			return model
 				.create({ title: 'new version test', slug: 'new-version-test' })
 				.then(doc => {
-					return vc.saveVersion(doc._id, doc)
+					return VersionControl.saveVersion(doc._id, doc)
 						.then(diff => {
 							expect(diff).to.have.property('documentId')
 							expect(diff).to.have.property('changes')
@@ -396,12 +378,10 @@ describe('VersionControl', function() {
 				})
 			)
 
-			const vc = new VersionControl(connection)
-
 			return model
 				.create({ title: 'new version test', slug: 'new-version-test' })
 				.then(doc => {
-					return vc.saveVersion(doc._id, doc)
+					return VersionControl.saveVersion(doc._id, doc)
 						.then(diff => {
 							expect(diff).to.have.property('hash', VersionControl.hashDocument(doc))
 						})
@@ -440,18 +420,16 @@ describe('VersionControl', function() {
 				}
 			}, { connection: connection })
 
-			const vc = new VersionControl(connection)
-
-			return createDocVersions(coll.model, vc.model, [
+			return createDocVersions(coll.model, VersionControl.model, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' },
 				{ slug: 'test-two' }
 			])
 			.then(id => {
-				return vc.getVersions(id).then(versions => ({ id, versions }))
+				return VersionControl.getVersions(id).then(versions => ({ id, versions }))
 			})
 			.then(data => {
-				return vc.restoreVersion(data.id, data.versions[1].version._id, coll)
+				return VersionControl.restoreVersion(data.id, data.versions[1].version._id, coll)
 					.then(() => {
 						return coll.readById(data.id)
 					})
