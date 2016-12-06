@@ -7,6 +7,7 @@ const spies           = require('chai-spies')
 const mongoose        = require('mongoose')
 const mockgoose       = require('mockgoose')
 const Collection      = require('../../../collection')
+const VersionControl  = require('../../../lib/version-control')
 const collectionDefs  = require('../../fixtures/collections')
 const config          = require('../../fixtures/sevr-config')
 const ModelFactory    = require('../../../lib/model-factory')()
@@ -939,6 +940,40 @@ describe('Collection', function() {
 						done()
 					})
 			})
+
+			it('should create a document version for the new document', function() {
+				const usersCollection = new Collection('users', collectionDefs.users, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+
+				return usersCollection.model
+					.create([
+						{
+							_id: ids[0],
+							username: 'testDoc',
+							email: 'test@doc.com'
+						},
+						{
+							_id: ids[1],
+							username: 'johndoe',
+							email: 'jdoe@gmail.com'
+						}
+					])
+					.then(() => {
+						return postsCollection
+							.create({
+								title: 'Test 2',
+								content: 'Test 2 content',
+								author: ids[0]
+							})
+					})
+					.then(doc => {
+						return VersionControl.getVersions(doc._id)
+					})
+					.then(versions => {
+						expect(versions).to.have.length(1)
+						expect(versions[0].doc).to.have.property('title', 'Test 2')
+					})
+			})
 		})
 
 		describe('update()', function() {
@@ -1043,6 +1078,37 @@ describe('Collection', function() {
 						done()
 					})
 			})
+
+			it('should create a new document version record for each document', function() {
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				
+				return postsCollection.model
+					.create({
+						title: 'Initial Document',
+						content: '',
+						author: ids[0]
+					})
+					.then(() => {
+						return postsCollection.update([
+							{ title: 'test2', content: '', author: ids[0] },
+							{ title: 'test3', content: '', author: ids[0] }
+						])
+					})
+					.then(docs => {
+						const promises = docs.map(doc => {
+							return VersionControl.getVersions(doc._id)
+						})
+
+						return Promise.all(promises)
+					})
+					.then(versions => {
+						expect(versions).to.have.length(2)
+						expect(versions[0]).to.have.length(1)
+						expect(versions[1]).to.have.length(1)
+						expect(versions[0][0].doc).to.have.property('title', 'test2')
+						expect(versions[1][0].doc).to.have.property('title', 'test3')
+					})
+			})
 		})
 
 		describe('updateById()', function() {
@@ -1120,6 +1186,41 @@ describe('Collection', function() {
 						expect(err).to.have.deep.property('errors.content')
 						expect(err).to.have.deep.property('errors.content.message', 'content must not equal foobar')
 						done()
+					})
+			})
+
+			it('should store a new document version', function() {
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+
+				return postsCollection.model
+					.create({
+						title: 'Update Document',
+						content: '',
+						author: ids[0]
+					})
+					.then(doc => {
+						return postsCollection.updateById(doc._id, {
+							content: 'test1'
+						})
+					})
+					.then(doc => {
+						return VersionControl.getVersions(doc._id)
+					})
+					.then(versions => {
+						expect(versions).to.have.length(1)
+						expect(versions[0].doc).to.have.property('content', 'test1')
+
+						return postsCollection.updateById(versions[0].version.documentId, {
+							content: 'test2'
+						})
+					})
+					.then(doc => {
+						return VersionControl.getVersions(doc._id)
+					})
+					.then(versions => {
+						expect(versions).to.have.length(2)
+						expect(versions[0].doc).to.have.property('content', 'test2')
+						expect(versions[1].doc).to.have.property('content', 'test1')
 					})
 			})
 		})

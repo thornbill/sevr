@@ -1,10 +1,11 @@
 'use strict'
 
-const format        = require('util').format
-const _             = require('lodash')
-const mongoose      = require('mongoose')
-const SchemaBuilder = require('../lib/schema-builder')
-const ModelFactory  = require('../lib/model-factory')()
+const format         = require('util').format
+const _              = require('lodash')
+const mongoose       = require('mongoose')
+const SchemaBuilder  = require('../lib/schema-builder')
+const ModelFactory   = require('../lib/model-factory')()
+const VersionControl = require('../lib/version-control')
 
 const requiredProperties = {
 	base: [
@@ -37,7 +38,7 @@ class Collection {
 		// Validate Collection Definiton
 		let defErrors = []
 		if (!Collection.isValidDefinition(this._definition, defErrors)){
-			if(defErrors.length > 0)
+			if(defErrors.length > 0) 
 				throw new Error(format('`%s` collection %s', this._name, defErrors[0]))
 		}
 		// Validate Collection fields
@@ -755,6 +756,13 @@ class Collection {
 					return doc
 				}
 			})
+			.then(doc => {
+				return VersionControl
+					.saveVersion(doc._id, doc)
+					.then(() => {
+						return doc
+					})
+			})
 	}
 
 	/**
@@ -802,6 +810,16 @@ class Collection {
 		.then(() => {
 			return self.model.insertMany(docs)
 		})
+		.then(docs => {
+			// Save the document versions
+			const promises = docs.map(doc => {
+				return VersionControl.saveVersion(doc._id, doc)
+			})
+
+			return Promise
+				.all(promises)
+				.then(() => { return docs })
+		})
 	}
 
 	/**
@@ -814,10 +832,19 @@ class Collection {
 	 * @return {Promise}
 	 */
 	updateById(id, data) {
-		return this.model.findByIdAndUpdate(id, data, {
-			new: true,
-			runValidators: true
-		}).exec()
+		return this.model
+			.findByIdAndUpdate(id, data, {
+				new: true,
+				runValidators: true
+			})
+			.exec()
+			.then(doc => {
+				return VersionControl
+					.saveVersion(doc._id, doc)
+					.then(() => {
+						return doc
+					})
+			})
 	}
 
 	/**
