@@ -33,7 +33,8 @@
     "test": "mocha test/**/*",
     "docs": "scripts/docs",
     "lint": "eslint .",
-    "precommit": "npm run lint"
+    "precommit": "npm run lint",
+    "prepublish": "npm test"
   },
   "author": "David Street",
   "license": "MIT",
