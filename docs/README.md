@@ -6,6 +6,7 @@
 3. [Types](types.md)
 4. [Plugins](plugins.md)
 5. [Middleware](middleware.md)
+5. [Document Versioning](version-control.md)
 6. API
 	- [Sevr](api/Sevr.md)
 	- [Collection](api/Collection.md)

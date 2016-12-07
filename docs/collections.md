@@ -59,7 +59,12 @@ default to `_id`, the MongoDB ID field.
 }
 ```
 
-## virtuals: `Object`
+### versioned: `Boolean`
+This property, which defaults to `true`, allows a collection to opt-out of
+managing version information for its documents.
+
+
+### virtuals: `Object`
 A map of virtual properties. These are fields that do not exist in the
 database, but are computed on demand.
 
