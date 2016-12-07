@@ -2,6 +2,17 @@
 
 Notable changes to Sevr will be documented in this file.
 
+## 0.3.0 (December 07, 2016)
+
+### Changes
+
+- Added version control for documents [#8](https://github.com/ExclamationLabs/sevr/issues/8)
+- Added additional information for repo
+- Require Node.js v6+ [#6](https://github.com/ExclamationLabs/sevr/pull/6) @bpowers1215
+- Better error messaging [#7](https://github.com/ExclamationLabs/sevr/pull/7) @bpowers1215
+- Default type name to constructor [#9](https://github.com/ExclamationLabs/sevr/pull/9) @bpowers1215
+
+
 ## 0.2.3 (November 15, 2016)
 
 ### Fixes
