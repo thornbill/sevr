@@ -40,10 +40,6 @@ function createDocVersions(docModel, vcModel, docs) {
 }
 
 describe('VersionControl', function() {
-	after(function() {
-		// VersionControl._destroy()
-	})
-
 	describe('getVersions', function() {
 		beforeEach(function(done) {
 			mockgoose(mongoose)
@@ -384,6 +380,36 @@ describe('VersionControl', function() {
 					return VersionControl.saveVersion(doc._id, doc)
 						.then(diff => {
 							expect(diff).to.have.property('hash', VersionControl.hashDocument(doc))
+						})
+				})
+		})
+
+		it('should not create a new version if the new document matches the latest', function() {
+			const connection = mongoose.connection
+			const model = connection.model('posts',
+				new mongoose.Schema({
+					title: String,
+					slug: String
+				})
+			)
+
+			return model
+				.create({ title: 'new version test', slug: 'new-version-test' })
+				.then(doc => {
+					return VersionControl.saveVersion(doc._id, doc)
+						.then(() => {
+							return VersionControl.getVersions(doc._id)
+						})
+						.then(versions => {
+							expect(versions).to.have.length(1)
+
+							return VersionControl.saveVersion(doc._id, doc)
+						})
+						.then(() => {
+							return VersionControl.getVersions(doc._id) 
+						})
+						.then(versions => {
+							expect(versions).to.have.length(1)
 						})
 				})
 		})

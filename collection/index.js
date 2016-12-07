@@ -59,7 +59,10 @@ class Collection {
 		try {
 			// Do not attempt to recreate the model if it already exists
 			if (!this._connection.models.hasOwnProperty(this._definition.singular)) {
-				this._model = ModelFactory.create(this._connection.model(this._definition.singular, SchemaBuilder.create(this._definition)))
+				const schema = SchemaBuilder.create(this._definition)
+
+				VersionControl.applyCollectionMethods(this, schema)
+				this._model = ModelFactory.create(this._connection.model(this._definition.singular, schema))
 			} else {
 				this._model = ModelFactory.create(this._connection.models[this._definition.singular])
 			}
@@ -757,8 +760,8 @@ class Collection {
 				}
 			})
 			.then(doc => {
-				return VersionControl
-					.saveVersion(doc._id, doc)
+				return doc
+					.saveVersion()
 					.then(() => {
 						return doc
 					})
@@ -813,7 +816,7 @@ class Collection {
 		.then(docs => {
 			// Save the document versions
 			const promises = docs.map(doc => {
-				return VersionControl.saveVersion(doc._id, doc)
+				return doc.saveVersion()
 			})
 
 			return Promise
@@ -839,8 +842,8 @@ class Collection {
 			})
 			.exec()
 			.then(doc => {
-				return VersionControl
-					.saveVersion(doc._id, doc)
+				return doc
+					.saveVersion()
 					.then(() => {
 						return doc
 					})
