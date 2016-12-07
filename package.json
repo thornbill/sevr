@@ -1,6 +1,6 @@
 {
   "name": "sevr",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "A modern framework for building custom content management systems",
   "keywords": [
     "cms",
@@ -57,7 +57,7 @@
     "husky": "^0.11.9",
     "jsdoc-to-markdown": "^2.0.1",
     "mocha": "^2.4.5",
-	"mockgoose": "^6.0.8"
+    "mockgoose": "^6.0.8"
   },
   "engines": {
     "node": ">=6.0.0"
