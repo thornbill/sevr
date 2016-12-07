@@ -8,7 +8,6 @@ const mongoose        = require('mongoose')
 const Collection      = require('../../../collection')
 const collectionDefs  = require('../../fixtures/collections')
 const config          = require('../../fixtures/sevr-config')
-const ModelFactory    = require('../../../lib/model-factory')()
 
 const expect = chai.expect
 const fixtures = {
@@ -556,7 +555,6 @@ describe('Collection', function() {
 		let users
 
 		before(function() {
-			// ModelFactory.flush()
 			users = new Collection('users', collectionDefs.users, factory)
 		})
 

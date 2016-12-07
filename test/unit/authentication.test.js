@@ -157,7 +157,7 @@ describe('Authentication', function() {
 				username: 'validateTest',
 				password: 'validate_me'
 			})
-			.then(user => {
+			.then(() => {
 				return auth.validateCredentials({
 					username: 'validateTest',
 					password: 'validate_me'
