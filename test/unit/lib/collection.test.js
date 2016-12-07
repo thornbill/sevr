@@ -80,6 +80,7 @@ describe('Collection', function() {
 
 		afterEach(function(done) {
 			delete mongoose.connection.models['Test1']
+			delete mongoose.connection.models['User']
 			mongoose.unmock(done)
 		})
 
@@ -103,6 +104,45 @@ describe('Collection', function() {
 			const populationFields = testCollection.populationFields
 			expect(populationFields).to.be.instanceof(Array)
 			expect(populationFields).to.eql(['field2'])
+		})
+
+		it('should add version control methods to documents by default', function() {
+			const usersCollection = new Collection('users', collectionDefs.users, factory)
+
+			return usersCollection.model
+				.create({
+					_id: mongoose.Types.ObjectId(),
+					username: 'testDoc',
+					email: 'test@doc.com'
+				})
+				.then(doc => {
+					expect(doc).to.respondTo('getVersions')
+					expect(doc).to.respondTo('getLatestVersion')
+					expect(doc).to.respondTo('getDiffs')
+					expect(doc).to.respondTo('getLatestDiff')
+					expect(doc).to.respondTo('saveVersion')
+					expect(doc).to.respondTo('restoreVersion')
+				})
+		})
+
+		it('should not add version control methods to documents when disabled', function() {
+			const def = Object.assign({}, collectionDefs.users, { versioned: false })
+			const usersCollection = new Collection('users', def, factory)
+
+			return usersCollection.model
+				.create({
+					_id: mongoose.Types.ObjectId(),
+					username: 'testDoc',
+					email: 'test@doc.com'
+				})
+				.then(doc => {
+					expect(doc).to.not.respondTo('getVersions')
+					expect(doc).to.not.respondTo('getLatestVersion')
+					expect(doc).to.not.respondTo('getDiffs')
+					expect(doc).to.not.respondTo('getLatestDiff')
+					expect(doc).to.not.respondTo('saveVersion')
+					expect(doc).to.not.respondTo('restoreVersion')
+				})
 		})
 	})
 

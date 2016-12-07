@@ -31,7 +31,7 @@ mongoose.Promise = global.Promise
 class Collection {
 	constructor(name, def, factory) {
 		this._name = name
-		this._definition = _.defaultsDeep({}, def)
+		this._definition = _.defaultsDeep({}, def, { versioned: true })
 		this._factory = factory
 		this._connection = this._factory.connection
 
@@ -61,7 +61,11 @@ class Collection {
 			if (!this._connection.models.hasOwnProperty(this._definition.singular)) {
 				const schema = SchemaBuilder.create(this._definition)
 
-				VersionControl.applyCollectionMethods(this, schema)
+				// Allow collection definition to opt-out of version control
+				if (this._definition.versioned) {
+					VersionControl.applyCollectionMethods(this, schema)
+				}
+
 				this._model = ModelFactory.create(this._connection.model(this._definition.singular, schema))
 			} else {
 				this._model = ModelFactory.create(this._connection.models[this._definition.singular])
