@@ -94,7 +94,6 @@ describe('FieldDefinition', function() {
 		it('should return a valid mongoose schemaType', function() {
 			const fd = new FieldDefinition('title', 'Title', String)
 			const fd2 = new FieldDefinition('title', 'Title', [String])
-			const authors = { name: 'authors', model: { modelName: 'Author' } }
 			const fd3 = new FieldDefinition('author', 'Author', {
 				type: mongoose.Types.ObjectId,
 				ref: 'Author'
