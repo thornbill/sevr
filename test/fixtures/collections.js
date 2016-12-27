@@ -23,8 +23,14 @@ module.exports = {
 			name: {
 				label: 'Name',
 				schemaType: {
-					first: { type: String },
-					last: { type: String }
+					first: {
+						label: 'First',
+						schemaType: String
+					},
+					last: {
+						label: 'Last',
+						schemaType: String
+					}
 				}
 			}
 		},

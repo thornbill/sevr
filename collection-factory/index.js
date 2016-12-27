@@ -1,8 +1,9 @@
 'use strict'
 
-const format        = require('util').format
-const _          = require('lodash')
-const Collection = require('../collection')
+const _           = require('lodash')
+const Collection  = require('../collection')
+const Links       = require('../links')
+const Collections = require('../collections')
 
 let factoryInstance = null
 
@@ -40,15 +41,11 @@ class CollectionFactory {
 		Object.keys(this._instances).map((key) => {
 			modelNames.push(this._instances[key]._definition.singular)
 		})
-		
+
 		// Validate Field Model References
-		for (let key in this._instances) {
-			let errors = []
-			for (let field in this._instances[key]._definition.fields){
-				if(!Collection.isValidFieldRef(this._instances[key]._definition.fields[field], field, modelNames, errors)){
-					if(errors.length > 0)
-						throw new Error(format('`%s` collection %s', key, errors[0]))
-				}
+		for (const link of Links) {
+			if (!Collections.getByModelName(link[1])) {
+				throw new Error(`Collection references unknown model: '${link[1]}'`)
 			}
 		}
 		
@@ -83,6 +80,19 @@ class CollectionFactory {
 	}
 
 	/**
+	 * Register all collections
+	 * 
+	 * @return {CollectionFactory}
+	 */
+	registerAll() {
+		Object.keys(this._instances).forEach(key => {
+			this._instances[key].register()
+		})
+
+		return this
+	}
+
+	/**
 	 * Get all collection instances
 	 * 
 	 * @readonly
@@ -100,6 +110,7 @@ class CollectionFactory {
 	get connection() {
 		return this._connection
 	}
+	
 
 	/**
 	 * Destroy the factory instance. This is for testing only.

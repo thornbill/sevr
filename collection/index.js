@@ -1,22 +1,9 @@
 'use strict'
 
-const format         = require('util').format
-const _              = require('lodash')
-const mongoose       = require('mongoose')
-const SchemaBuilder  = require('../lib/schema-builder')
-const ModelFactory   = require('../lib/model-factory')()
-const VersionControl = require('../lib/version-control')
-
-const requiredProperties = {
-	base: [
-		{ prop: 'singular', type: 'String' },
-		{ prop: 'fields', type: 'PlainObject' }
-	],
-	field: [
-		{ prop: 'label', type: 'String' },
-		{ prop: 'schemaType', type: ['Array', 'Object'] }
-	]
-}
+const mongoose             = require('mongoose')
+const VersionControl       = require('../lib/version-control')
+const FieldDefinition      = require('../field-definition')
+const DefinitionJsonParser = require('../lib/definition-json-parser')
 
 mongoose.Promise = global.Promise
 
@@ -31,149 +18,14 @@ mongoose.Promise = global.Promise
 class Collection {
 	constructor(name, def, factory) {
 		this._name = name
-		this._definition = _.defaultsDeep({}, def, { versioned: true })
 		this._factory = factory
 		this._connection = this._factory.connection
 
-		// Validate Collection Definiton
-		let defErrors = []
-		if (!Collection.isValidDefinition(this._definition, defErrors)){
-			if(defErrors.length > 0) 
-				throw new Error(format('`%s` collection %s', this._name, defErrors[0]))
+		this._definition = DefinitionJsonParser(name, def)
+
+		if (this._definition.versioned) {
+			VersionControl.applyCollectionMethods(this, this._definition.schema)
 		}
-		// Validate Collection fields
-		for(let field in this._definition.fields) {
-			if (!Collection.isValidField(this._definition.fields[field], field, defErrors)){
-				if(defErrors.length > 0)
-					throw new Error(format('`%s` collection %s', this._name, defErrors[0]))
-			}
-		}
-
-		// Normalize definition fields by adding a name property
-		// tht matches the field key
-		Object.keys(this._definition.fields).forEach(key => {
-			this._definition.fields[key].name = key
-		})
-
-		// Create the mongoose model
-		try {
-			// Do not attempt to recreate the model if it already exists
-			if (!this._connection.models.hasOwnProperty(this._definition.singular)) {
-				const schema = SchemaBuilder.create(this._definition)
-
-				// Allow collection definition to opt-out of version control
-				if (this._definition.versioned) {
-					VersionControl.applyCollectionMethods(this, schema)
-				}
-
-				this._model = ModelFactory.create(this._connection.model(this._definition.singular, schema))
-			} else {
-				this._model = ModelFactory.create(this._connection.models[this._definition.singular])
-			}
-		} catch (err) {
-			throw new Error(format('Failed to create collection `%s`:', this._name, err))
-		}
-	}
-
-	/**
-	 * Check if a collection definition is valid
-	 * 
-	 * @param {Object} definition
-	 * @param {Array} [errors] Mutated by the method to return all errors
-	 * @return {Boolean}
-	 * @static
-	 */
-	static isValidDefinition(definition, errors) {
-		let isValid = true
-
-		requiredProperties.base.forEach(required => {
-			if (!definition.hasOwnProperty(required.prop)) {
-				errors.push(format('must contain the `%s` property', required.prop))
-				isValid = false
-			}
-
-			let requiredTypes = Array.isArray(required.type) ? required.type : [required.type]
-			let validType = false
-
-			requiredTypes.forEach(type => {
-				if (_['is' + type](definition[required.prop])) {
-					validType = true
-				}
-			})
-
-			if (!validType) {
-				errors.push(format('`%s` property must be of type [%s]', required.prop, requiredTypes))
-				isValid = false
-			}
-		})
-
-		return isValid
-	}
-
-
-	/**
-	 * Check if a field definition is valid
-	 * 
-	 * @param  {Object} fieldDef
-	 * @param  {String} fieldName
-	 * @param  {Array} errors
-	 * @return {Boolean}
-	 * @static
-	 */
-	static isValidField(fieldDef, fieldName, errors) {
-		let isValid = true
-
-		requiredProperties.field.forEach(required => {
-			if (!fieldDef.hasOwnProperty(required.prop)) {
-				errors.push(format('`%s` field must contain `%s` property', fieldName, required.prop))
-				isValid = false
-			}
-
-			let requiredTypes = Array.isArray(required.type) ? required.type : [required.type]
-			let validType = false
-
-			requiredTypes.forEach(type => {
-				if (_['is' + type](fieldDef[required.prop])) {
-					validType = true
-				}
-			})
-
-			if (!validType) {
-				errors.push(format('`%s` field `%s` property must be of type [%s]', fieldName, required.prop, requiredTypes))
-				isValid = false
-			}
-		})
-
-		return isValid
-	}
-
-
-	/**
-	 * Check if a field definition model reference is valid
-	 * 
-	 * @param  {Object} fieldDef
-	 * @param  {String} fieldName
-	 * @param  {Array} modelNames
-	 * @param  {Array} errors
-	 * @return {Boolean}
-	 * @static
-	 */
-	static isValidFieldRef(fieldDef, fieldName, modelNames, errors) {
-		let isValid = true
-		let ref = null
-		
-		if (Array.isArray(fieldDef.schemaType)) {
-			ref = fieldDef.schemaType[0].ref
-		} else {
-			ref = fieldDef.schemaType.ref
-		}
-		
-		if(ref && !modelNames.includes(ref)){
-			isValid = false
-			errors.push(format('`%s` field model reference is invalid. Model `%s` not found', fieldName, ref))
-		}
-		
-		return isValid
 	}
 
 	/**
@@ -193,39 +45,9 @@ class Collection {
 	 * @memberOf Collection
 	 */
 	get definition() {
-		return _.defaultsDeep({}, this._definition)
+		return this._definition
 	}
 
-	/**
-	 * The name of the collection model
-	 * 
-	 * @readonly
-	 * @memberOf Collection
-	 */
-	get modelName() {
-		return this._definition.singular
-	}
-
-	/**
-	 * An array of fields that will be populated by
-	 * other collections
-	 * 
-	 * @readonly
-	 * @memberOf Collection
-	 */
-	get populationFields() {
-		return Object.keys(
-			_.pickBy(this._definition.fields, (field) => {
-				if (Array.isArray(field.schemaType)) {
-					return field.schemaType[0].hasOwnProperty('ref')
-				} else {
-					return field.schemaType.hasOwnProperty('ref')
-				}
-			})
-		)
-	}
-
-	
 	/**
 	 * The Mongoose model
 	 * 
@@ -237,13 +59,36 @@ class Collection {
 	}
 
 	/**
-	 * The model schema
+	 * The name of the collection model
 	 * 
 	 * @readonly
 	 * @memberOf Collection
 	 */
+	get modelName() {
+		return this._model.modelName
+	}
+
+	/**
+	 * An array of fields that will be populated by
+	 * other collections
+	 * 
+	 * @readonly
+	 * @deprecated
+	 * @memberOf Collection
+	 */
+	get populationFields() {
+		return this._definition.populationFields
+	}
+
+	/**
+	 * The model schema
+	 * 
+	 * @readonly
+	 * @deprecated
+	 * @memberOf Collection
+	 */
 	get schema() {
-		return this._model.schema
+		return this._definition.schema
 	}
 
 	/**
@@ -251,6 +96,7 @@ class Collection {
 	 * collection definition'
 	 * 
 	 * @readonly
+	 * @deprecated
 	 * @memberOf Collection
 	 */
 	get meta() {
@@ -262,14 +108,11 @@ class Collection {
 	 * Defaults to `_id`
 	 * 
 	 * @readonly
+	 * @deprecated
 	 * @memberOf Collection
 	 */
 	get defaultField() {
-		if (this._definition.hasOwnProperty('defaultField')) {
-			return this._definition.defaultField
-		} else {
-			return '_id'
-		}
+		return this._definition.defaultField
 	}
 
 	/**
@@ -278,6 +121,7 @@ class Collection {
 	 * @param  {Object} fieldDef
 	 * @return {String}
 	 * @static
+	 * @deprecated
 	 */
 	static getFieldRef(fieldDef) {
 		const schemaType = fieldDef.schemaType
@@ -295,6 +139,7 @@ class Collection {
 	 * @param  {Object} fieldDef
 	 * @return {String}
 	 * @static
+	 * @deprecated
 	 */
 	static getFieldRefDisplay(fieldDef) {
 		const schemaType = fieldDef.schemaType
@@ -314,22 +159,24 @@ class Collection {
 	 * 
 	 * @param  {Boolean} [flatten=false]
 	 * @return {Object}
+	 * @deprecated
 	 */
 	getFields(flatten) {
-		const fields = {}
+		return this._definition.getFieldNames().reduce((acc, name) => {
+			let data
 
-		_.values(this._definition.fields).forEach(field => {
-			let fieldParsed = this.getField(field.name, flatten)
-
-			// Coerce all fields to an array for consistency
-			if (!Array.isArray(fieldParsed)) fieldParsed = [fieldParsed]
-
-			fieldParsed.forEach(subField => {
-				fields[subField.name] = subField
-			})
-		})
-
-		return fields
+			if (flatten) {
+				data = this.getField(name, flatten).reduce((fields, field) => {
+					return Object.assign({}, fields, {
+						[field.name]: field
+					})
+				}, {})
+			} else {
+				data = { [name]: this.getField(name) }
+			}
+			
+			return Object.assign({}, acc, data)
+		}, {})
 	}
 
 	/**
@@ -362,28 +209,10 @@ class Collection {
 	 * 
 	 * @param  {Object} flattened
 	 * @return {Object}
+	 * @deprecated
 	 */
 	inflateFields(flattened) {
-		return Object.keys(flattened)
-			.reduce((prev, key) => {
-				const field = flattened[key]
-
-				if (!field.flattened) return prev.concat(key)
-
-				const parts = key.split('.')
-				const parent = parts[0]
-
-				if (prev.indexOf(parent) < 0) {
-					return prev.concat(parent)
-				} else {
-					return prev
-				}
-			}, [])
-			.reduce((prev, key) => {
-				return Object.assign({}, prev, {
-					[key]: this.getField(key)
-				})
-			}, {})
+		return this._definition.inflateFields(flattened)
 	}
 
 	/**
@@ -395,71 +224,40 @@ class Collection {
 	 * @param  {String}  fieldName
 	 * @param  {Boolean} [flatten=false]
 	 * @return {Object|Array}
+	 * @deprecated
 	 */
 	getField(fieldName, flatten) {
-		if (!this._definition.fields.hasOwnProperty(fieldName)) {
-			return
-		}
+		const field = this._definition.getField(fieldName)
 
-		const field = _.assign({}, this._definition.fields[fieldName])
-		const ref = Collection.getFieldRef(field)
-
-		if (ref) {
-			field.referenceModel = this._factory.getInstanceWithModel(ref).model
-			field.referenceCollection = this._factory.getInstanceWithModel(ref)
-		} else if (flatten && !Array.isArray(field.schemaType) && !field.schemaType.hasOwnProperty('type')) {
-			// Flatten nested field
-			return Object.keys(field.schemaType).map(fieldKey => {
-				const subField = field.schemaType[fieldKey]
-
-				return {
-					label: subField.label,
-					name: `${field.name}.${fieldKey}`,
-					schemaType: { type: subField.type },
-					flattened: true
-				}
+		if (!field) return
+		
+		if (!flatten || field.isMultiValue) {
+			return Object.assign({}, field.toObject(), {
+				referenceModel: field.isLinked ? field.getLinkedCollection().model : undefined,
+				refrenceCollection: field.isLinked ? field.getLinkedCollection() : undefined,
 			})
 		}
 
-		return field
+		const flatFields = field.getFlatFields()
+
+		return Object.keys(flatFields).map(key => {
+			return {
+				name: key,
+				label: flatFields[key].label,
+				flattened: true,
+				schemaType: flatFields[key].toObject()
+			}
+		})
 	}
 
 	/**
 	 * Get the available options for all reference fields
 	 * 
 	 * @return {Promise}
+	 * @deprecated
 	 */
 	getRefOptions() {
-		const allFields = this.getFields()
-		const refFields = Object.keys(allFields).filter(key => {
-			return allFields[key].hasOwnProperty('referenceCollection')
-		})
-		.reduce((map, key) => {
-			return Object.assign({}, map, {
-				[key]: allFields[key]
-			})
-		}, {})
-
-		let promises = []
-
-		Object.keys(refFields).forEach(key => {
-			const field = refFields[key]
-			const display = Collection.getFieldRefDisplay(field)
-
-			promises.push(new Promise((res, rej) => {
-				field.referenceCollection
-					.read(null, display)
-					.then(docs => {
-						res({
-							field: key,
-							options: docs
-						})
-					})
-					.catch(err => rej(err))
-			}))
-		})
-
-		return Promise.all(promises)
+		return this._definition.getLinkedOptions()
 	}
 
 	/**
@@ -470,16 +268,10 @@ class Collection {
 	 * 
 	 * @param  {String} fieldName
 	 * @return {String}
+	 * @deprecated
 	 */
 	getFieldTypeName(fieldName) {
-		const fieldsFlat = this.getFields(true)
-		const fieldDef = fieldsFlat[fieldName]
-
-		if (Array.isArray(fieldDef.schemaType)) {
-			return fieldDef.schemaType[0].name
-		} else {
-			return fieldDef.schemaType.name
-		}
+		return this._definition.getField(fieldName).type.name
 	}
 
 	/**
@@ -495,32 +287,10 @@ class Collection {
 	 * 
 	 * @param  {String} fieldName
 	 * @return {Array}
+	 * @deprecated
 	 */
 	getFieldTypes(fieldName) {
-		const fields = this._definition.fields
-		const fieldsFlat = this.getFields(true)
-
-		let field
-
-		if (fields.hasOwnProperty(fieldName)) {
-			field = _.assign({}, fields[fieldName])
-		} else if (fieldsFlat.hasOwnProperty(fieldName)) {
-			field = _.assign({}, fieldsFlat[fieldName])
-		} else {
-			return
-		}
-
-		const types = [fieldName]
-		const schema = Array.isArray(field.schemaType) ? field.schemaType[0] : field.schemaType
-
-		if (schema.hasOwnProperty('name')) {
-			types.push(schema.name)
-			types.push(schema.type.name.replace(/Schema/, ''))
-		} else {
-			types.push('COMPLEX')
-		}
-
-		return types
+		return this._definition.getFieldTypes(fieldName)
 	}
 
 	/**
@@ -531,34 +301,25 @@ class Collection {
 	 * 
 	 * @param  {String} [prop]
 	 * @return {*}
+	 * @deprecated
 	 */
 	getMeta(prop) {
-		if (!this._definition.meta) return
-
-		if (!prop) {
-			return _.assign({}, this._definition.meta)
-		}
-
-		if (typeof this._definition.meta[prop] == 'object') {
-			return _.assign({}, this._definition.meta[prop])
-		} else {
-			return this._definition.meta[prop]
-		}
+		return this._definition.getMeta(prop)
 	}
 
 	/**
 	 * Extend a field schema
 	 * 
-	 * @param  {String} field
+	 * @param  {String} fieldName
 	 * @param  {String} prop
 	 * @param  {*} value
 	 * @return {Collection}
+	 * @deprecated
 	 */
-	extendFieldSchema(field, prop, value) {
-		if (!this.getField(field)) return
-		if (typeof this.schema.path(field)[prop] !== 'function') return
-
-		this.schema.path(field)[prop](value)
+	extendFieldSchema(fieldName, prop, value) {
+		const field = this._definition.getField(fieldName)
+		
+		if (field) field.extendType(prop, value)
 		return this
 	}
 
@@ -569,16 +330,12 @@ class Collection {
 	 * @param {String} label
 	 * @param {*}      schemaType
 	 * @return {Collection}
+	 * @deprecated
 	 */
 	addField(name, label, schemaType) {
-		this._definition.fields[name] = {
-			name: name,
-			label: label,
-			schemaType: schemaType
-		}
+		const field = new FieldDefinition(name, label, schemaType)
 
-		SchemaBuilder.addPath(name, schemaType, this.schema)
-
+		this._definition.addField(field)
 		return this
 	}
 
@@ -592,13 +349,10 @@ class Collection {
 	 * @param  {String}   type
 	 * @param  {Function} cb
 	 * @return {Collection}
+	 * @deprecated
 	 */
 	attachHook(when, type, cb) {
-		if (when !== 'pre' && when !== 'post') {
-			throw new Error('Must include "pre" or "post" when attaching a hook')
-		}
-
-		this.schema[when].call(this.schema, type, cb)
+		this._definition.attachHook(when, type, cb)
 		return this
 	}
 
@@ -645,6 +399,16 @@ class Collection {
 	 */
 	useAfter(op, fn) {
 		this.model.useAfter(op, fn)
+		return this
+	}
+
+	/**
+	 * Register the collection model
+	 * 
+	 * @return {Collection}
+	 */
+	register() {
+		this._model = this._definition.buildModel()
 		return this
 	}
 
@@ -764,11 +528,19 @@ class Collection {
 				}
 			})
 			.then(doc => {
-				return doc
-					.saveVersion()
-					.then(() => {
-						return doc
-					})
+				if (Array.isArray(doc)) {
+					return Promise.all(
+						doc.map(d => {
+							return d.saveVersion().then(() => d) 
+						})
+					)
+				} else {
+					return doc
+						.saveVersion()
+						.then(() => {
+							return doc
+						})
+				}
 			})
 	}
 

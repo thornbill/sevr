@@ -7,6 +7,7 @@ const spies           = require('chai-spies')
 const mongoose        = require('mongoose')
 const mockgoose       = require('mockgoose')
 const Collection      = require('../../../collection')
+const Collections     = require('../../../collections')
 const VersionControl  = require('../../../lib/version-control')
 const collectionDefs  = require('../../fixtures/collections')
 
@@ -30,13 +31,13 @@ const fixtures = {
 				'field3': {
 					label: 'name',
 					schemaType: {
-						first: { label: 'first', type: String },
-						last: { label: 'last', type: String }
+						first: { label: 'first', schemaType: String },
+						last: { label: 'last', schemaType: String }
 					}
 				},
 				'field4': {
 					label: 'values',
-					schemaType: [{ type: String }]
+					schemaType: [{ type: String, name: 'foobar' }]
 				}
 			}
 		},
@@ -76,35 +77,73 @@ describe('Collection', function() {
 		})
 
 		afterEach(function(done) {
-			delete mongoose.connection.models['Test1']
+			delete mongoose.connection.models['Test']
 			delete mongoose.connection.models['User']
 			mongoose.unmock(done)
 		})
 
 		it('should set the collection name', function() {
-			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
+			const def = {
+				singular: 'Test',
+				fields: {
+					title: {
+						label: 'title',
+						schemaType: String
+					}
+				}
+			}
+			const testCollection = new Collection('test1', def, factory)
 			expect(testCollection.name).to.equal('test1')
 		})
 
-		it('should set the definition', function() {
-			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
-			expect(testCollection.definition).to.be.instanceof(Object)
-		})
-
 		it('should set the model name to the singular property', function() {
-			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
-			expect(testCollection.modelName).to.equal(fixtures.definitions.test1.singular)
+			const def = {
+				singular: 'Test',
+				fields: {
+					title: {
+						label: 'title',
+						schemaType: String
+					}
+				}
+			}
+			const testCollection = new Collection('test1', def, factory).register()
+			expect(testCollection.modelName).to.equal('Test')
 		})
 
 		it('should set the population fields', function() {
-			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
+			const def = {
+				singular: 'Test',
+				fields: {
+					author: {
+						label: 'Author',
+						schemaType: {
+							ref: 'User',
+							type: mongoose.Schema.Types.ObjectId
+						}
+					}
+				}
+			}
+			const testCollection = new Collection('test1', def, factory)
 			const populationFields = testCollection.populationFields
 			expect(populationFields).to.be.instanceof(Array)
-			expect(populationFields).to.eql(['field2'])
+			expect(populationFields).to.eql(['author'])
 		})
 
 		it('should add version control methods to documents by default', function() {
-			const usersCollection = new Collection('users', collectionDefs.users, factory)
+			const def = {
+				singular: 'User',
+				fields: {
+					username: {
+						label: 'Username',
+						schemaType: String
+					},
+					email: {
+						label: 'Email',
+						schemaType: String
+					}
+				}
+			}
+			const usersCollection = new Collection('users', def, factory).register()
 
 			return usersCollection.model
 				.create({
@@ -123,8 +162,21 @@ describe('Collection', function() {
 		})
 
 		it('should not add version control methods to documents when disabled', function() {
-			const def = Object.assign({}, collectionDefs.users, { versioned: false })
-			const usersCollection = new Collection('users', def, factory)
+			const def = {
+				singular: 'User',
+				versioned: false,
+				fields: {
+					username: {
+						label: 'Username',
+						schemaType: String
+					},
+					email: {
+						label: 'Email',
+						schemaType: String
+					}
+				}
+			}
+			const usersCollection = new Collection('users', def, factory).register()
 
 			return usersCollection.model
 				.create({
@@ -140,96 +192,6 @@ describe('Collection', function() {
 					expect(doc).to.not.respondTo('saveVersion')
 					expect(doc).to.not.respondTo('restoreVersion')
 				})
-		})
-	})
-
-	describe('isValidDefinition()', function() {
-		it('should return true for a valid definition', function() {
-			expect(Collection.isValidDefinition({
-				singular: 'Users',
-				fields: {}
-			})).to.be.true
-
-			expect(Collection.isValidDefinition({
-				singular: 'Users',
-				fields: {
-					name: {
-						label: 'Name',
-						schemaType: { type: String }
-					}
-				}
-			})).to.be.true
-		})
-
-		it('should return false when `singular` is missing', function() {
-			let errors = []
-			expect(Collection.isValidDefinition({
-				fields: {}
-			}, errors)).to.be.false
-
-			expect(errors).to.have.length(2)
-		})
-
-		it('should return false when `fields` is missing', function() {
-			let errors = []
-			expect(Collection.isValidDefinition({
-				singular: 'Test'
-			}, errors)).to.be.false
-
-			expect(errors).to.have.length(2)
-		})
-	})
-
-	describe('isValidField()', function() {
-		it('should return true for valid field definition', function() {
-			let errors = []
-			expect(Collection.isValidField({
-				label: 'Text',
-				schemaType: { type: String }
-			}, 'test', errors)).to.be.true
-		})
-
-		it('should return false for when `label` is missing', function() {
-			let errors = []
-			expect(Collection.isValidField({
-				schemaType: { type: String }
-			}, 'test', errors)).to.be.false
-			expect(errors).to.have.length(2)
-		})
-
-		it('should return false for when `schemaType` is missing', function() {
-			let errors = []
-			expect(Collection.isValidField({
-				label: 'Text'
-			}, 'test', errors)).to.be.false
-
-			expect(errors).to.have.length(2)
-		})
-	})
-
-	describe('isValidFieldRef()', function() {
-		it('should return true for valid field definition', function() {
-			let errors = []
-			expect(Collection.isValidFieldRef({
-				label: 'Text',
-				schemaType: { 
-					type: mongoose.Schema.Types.ObjectId,
-					ref: 'User'
-				}
-			}, 'test', ['User'], errors)).to.be.true
-		})
-		
-		it('should return false for when `ref` is not a collection', function() {
-			let errors = []
-			expect(Collection.isValidFieldRef({
-				label: 'Text',
-				schemaType: {
-					type: mongoose.Schema.Types.ObjectId,
-					ref: 'User'
-				}
-			}, 'test', ['Test'], errors)).to.be.false
-			
-			expect(errors).to.have.length(1)
 		})
 	})
 
@@ -265,37 +227,120 @@ describe('Collection', function() {
 		})
 
 		afterEach(function(done) {
-			delete mongoose.connection.models['Test1']
+			delete mongoose.connection.models['Test']
 			mongoose.unmock(done)
 		})
 
 		it('should return a field object', function() {
-			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
+			const def = {
+				singular: 'Test',
+				fields: {
+					field1: { label: 'Field1', schemaType: String }
+				}
+			}
+			const testCollection = new Collection('test1', def, factory)
 			const field = testCollection.getField('field1')
 			expect(field).to.be.instanceof(Object)
 		})
 
 		it('should return a field object with referenceModel', function() {
-			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
+			const def = {
+				singular: 'Test',
+				fields: {
+					field2: {
+						label: 'Field2',
+						schemaType: {
+							type: mongoose.Schema.Types.ObjectId,
+							ref: 'User'
+						}
+					}
+				}
+			}
+
+			Collections.add('users', 'User', { model: 'User' })
+
+			const testCollection = new Collection('test1', def, factory)
 			const field = testCollection.getField('field2')
+			
 			expect(field).to.be.instanceof(Object)
 			expect(field).to.haveOwnProperty('referenceModel')
 		})
 
 		it('should flatten the field if nested and enabled', function() {
-			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
-			const field3 = testCollection.getField('field3', true)
-			expect(field3).to.be.instanceof(Array)
-			expect(field3).to.have.deep.property('[0].name', 'field3.first')
-			expect(field3).to.have.deep.property('[1].name', 'field3.last')
-			expect(field3).to.have.deep.property('[1].flattened', true)
+			const def = {
+				singular: 'Test',
+				fields: {
+					name: {
+						label: 'name',
+						schemaType: {
+							first: { label: 'first', schemaType: String },
+							last: { label: 'last', schemaType: String }
+						}
+					},
+					deep: {
+						label: 'deep',
+						schemaType: {
+							grandparent: {
+								label: 'grandparent',
+								schemaType: {
+									parent: {
+										label: 'parent',
+										schemaType: {
+											child: {
+												label: 'child',
+												schemaType: String
+											},
+											sibling: {
+												label: 'sibling',
+												schemaType: String
+											}
+										}
+									},
+									uncle: {
+										label: 'uncle',
+										schemaType: String
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			const testCollection = new Collection('tests', def, factory)
+			const field = testCollection.getField('name', true)
+			const deep = testCollection.getField('deep', true)
+
+			expect(field).to.be.instanceof(Array)
+			expect(field).to.have.deep.property('[0].name', 'name.first')
+			expect(field).to.have.deep.property('[0].label', 'first')
+			expect(field).to.have.deep.property('[1].name', 'name.last')
+			expect(field).to.have.deep.property('[1].label', 'last')
+			expect(field).to.have.deep.property('[1].flattened', true)
+
+			expect(deep).to.be.instanceof(Array)
+			expect(deep).to.have.deep.property('[0].name', 'deep.grandparent.parent.child')
+			expect(deep).to.have.deep.property('[0].label', 'child')
+			expect(deep).to.have.deep.property('[1].name', 'deep.grandparent.parent.sibling')
+			expect(deep).to.have.deep.property('[1].label', 'sibling')
+			expect(deep).to.have.deep.property('[2].name', 'deep.grandparent.uncle')
+			expect(deep).to.have.deep.property('[2].label', 'uncle')
 		})
 
 		it('should not flatten fields that store arrays of values', function() {
-			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
-			const field4 = testCollection.getField('field4', true)
-			expect(field4).to.be.instanceof(Object)
-			expect(field4.name).to.eql('field4')
+			const def = {
+				singular: 'Test',
+				fields: {
+					tags: {
+						label: 'tags',
+						schemaType: [{ type: String }]
+					}
+				}
+			}
+			const testCollection = new Collection('tests', def, factory)
+			const field = testCollection.getField('tags', true)
+			
+			expect(field).to.be.instanceof(Object)
+			expect(field.name).to.eql('tags')
 		})
 	})
 
@@ -316,15 +361,61 @@ describe('Collection', function() {
 		})
 
 		it('should return all field definitions', function() {
-			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
+			const def = {
+				singular: 'Test1',
+				fields: {
+					field1: {
+						label: 'Field1',
+						schemaType: { type: String }
+					},
+					field2: {
+						label: 'Field2',
+						schemaType: {
+							type: mongoose.Schema.Types.ObjectId,
+							ref: 'User'
+						}
+					}
+				}
+			}
+
+			Collections.add('users', 'User', { model: 'User' })
+
+			const testCollection = new Collection('test1', def, factory)
 			const fields = testCollection.getFields()
+			
 			expect(fields).to.be.instanceOf(Object)
 			expect(fields).to.haveOwnProperty('field1')
 			expect(fields).to.haveOwnProperty('field2')
 		})
 
 		it('should flatten all nested fields if enabled', function() {
-			const testCollection = new Collection('test1', fixtures.definitions.test1, factory)
+			const def = {
+				singular: 'Test1',
+				fields: {
+					field1: {
+						label: 'Field1',
+						schemaType: { type: String }
+					},
+					field2: {
+						label: 'Field2',
+						schemaType: {
+							type: mongoose.Schema.Types.ObjectId,
+							ref: 'User'
+						}
+					},
+					field3: {
+						label: 'name',
+						schemaType: {
+							first: { label: 'first', schemaType: String },
+							last: { label: 'last', schemaType: String }
+						}
+					}
+				}
+			}
+
+			Collections.add('users', 'User', { model: 'User' })
+
+			const testCollection = new Collection('test1', def, factory)
 			const fields = testCollection.getFields(true)
 
 			expect(fields).to.be.instanceOf(Object)
@@ -333,6 +424,7 @@ describe('Collection', function() {
 
 			expect(fields).to.haveOwnProperty('field3.first')
 			expect(fields).to.haveOwnProperty('field3.last')
+			
 			expect(fields['field3.first']).to.haveOwnProperty('label')
 			expect(fields['field3.first']).to.haveOwnProperty('name')
 			expect(fields['field3.first']).to.haveOwnProperty('schemaType')
@@ -388,6 +480,66 @@ describe('Collection', function() {
 			expect(fieldsExpanded).to.have.deep.property('field2.name', 'field2')
 			expect(fieldsExpanded).to.have.deep.property('field3.name', 'field3')
 			expect(fieldsExpanded).to.have.deep.property('field3.label', 'name')
+		})
+	})
+
+	describe('getRefOptions()', function() {
+		beforeEach(function(done) {
+			mockgoose(mongoose)
+				.then(() => {
+					mongoose.connect('mongodb://testing', err => {
+						factory.connection = mongoose.connection
+						done(err)
+					})
+				})
+		})
+
+		afterEach(function(done) {
+			delete mongoose.connection.models['Test1']
+			delete mongoose.connection.models['User']
+			delete mongoose.connection.models['Post']
+			Collections.clear()
+			mongoose.unmock(done)
+		})
+
+		it.only('should return a map of options by field', function() {
+			const users = new Collection('users', {
+				singular: 'User',
+				fields: {
+					name: {
+						label: 'Name',
+						schemaType: String
+					}
+				}
+			}, factory).register()
+			const posts = new Collection('posts', {
+				singular: 'Post',
+				fields: {
+					author: {
+						label: 'Author',
+						schemaType: {
+							type: mongoose.Schema.Types.ObjectId,
+							ref: 'User'
+						}
+					}
+				}
+			}, factory).register()
+
+			Collections.add('users', 'User', users)
+			Collections.add('posts', 'Post', posts)
+
+			return users
+				.create([
+					{ name: 'test1' },
+					{ name: 'test2' }
+				])
+				.then(() => {
+					return posts.getRefOptions()
+				}).then(options => {
+					expect(options).to.have.length(1)
+					expect(options[0]).to.have.property('field', 'author')
+					expect(options[0].options).to.have.length(2)
+				})
 		})
 	})
 
@@ -475,8 +627,8 @@ describe('Collection', function() {
 					field3: {
 						label: 'full name',
 						schemaType: {
-							first: { name: 'text', label: 'First', type: String },
-							last: { name: 'text', label: 'Last', type: String }
+							first: { name: 'text', label: 'First', schemaType: String },
+							last: { name: 'text', label: 'Last', schemaType: String }
 						}
 					}
 				}
@@ -509,8 +661,8 @@ describe('Collection', function() {
 					field3: {
 						label: 'full name',
 						schemaType: {
-							first: { name: 'text', label: 'First', type: String },
-							last: { name: 'text', label: 'Last', type: String }
+							first: { name: 'text', label: 'First', schemaType: String },
+							last: { name: 'text', label: 'Last', schemaType: String }
 						}
 					}
 				}
@@ -536,39 +688,86 @@ describe('Collection', function() {
 
 		afterEach(function(done) {
 			delete mongoose.connection.models['User']
-			delete mongoose.connection.models['Post']
 			mongoose.unmock(done)
 		})
 
 		it('should return the meta property specified', function() {
-			const collectionWithMeta = new Collection('users', collectionDefs.users, factory)
+			const def = {
+				singular: 'User',
+				fields: {
+					'name': {
+						label: 'Name',
+						schemaType: { type: String }
+					}
+				},
+				meta: {
+					description: 'A collection of users for the CMS'
+				}
+			}
+			const collectionWithMeta = new Collection('users', def, factory)
 
 			expect(collectionWithMeta.getMeta('description'))
-				.to.equal(collectionDefs.users.meta.description)
+				.to.equal('A collection of users for the CMS')
 		})
 
 		it('should return all meta data if none specified', function() {
-			const collectionWithMeta = new Collection('users', collectionDefs.users, factory)
+			const def = {
+				singular: 'User',
+				fields: {
+					'name': {
+						label: 'Name',
+						schemaType: { type: String }
+					}
+				},
+				meta: {
+					description: 'A collection of users for the CMS'
+				}
+			}
+			const collectionWithMeta = new Collection('users', def, factory)
 
-			expect(collectionWithMeta.getMeta()).to.eql(collectionDefs.users.meta)
-			expect(collectionWithMeta.getMeta()).to.not.equal(collectionDefs.users.meta)
+			expect(collectionWithMeta.getMeta()).to.eql({
+				description: 'A collection of users for the CMS'
+			})
 
-			expect(collectionWithMeta.meta).to.eql(collectionDefs.users.meta)
+			expect(collectionWithMeta.meta).to.eql({
+				description: 'A collection of users for the CMS'
+			})
 		})
 
 		it('should return undefined if property does not exist', function() {
-			const collectionWithMeta = new Collection('users', collectionDefs.users, factory)
+			const def = {
+				singular: 'User',
+				fields: {
+					'name': {
+						label: 'Name',
+						schemaType: { type: String }
+					}
+				},
+				meta: {
+					description: 'A collection of users for the CMS'
+				}
+			}
+			const collectionWithMeta = new Collection('users', def, factory)
 
 			expect(collectionWithMeta.getMeta('foo')).to.be.undefined
 		})
 
-		it('should return undefined if no metadata exists', function() {
-			const collectionWithoutMeta = new Collection('posts', collectionDefs.posts, factory)
+		it('should return empty object if no metadata exists', function() {
+			const def = {
+				singular: 'User',
+				fields: {
+					'name': {
+						label: 'Name',
+						schemaType: { type: String }
+					}
+				}
+			}
+			const collectionWithoutMeta = new Collection('users', def, factory)
 
-			expect(collectionWithoutMeta.getMeta()).to.be.undefined
+			expect(collectionWithoutMeta.getMeta()).to.be.eql({})
 			expect(collectionWithoutMeta.getMeta('description')).to.be.undefined
 
-			expect(collectionWithoutMeta.meta).to.be.undefined
+			expect(collectionWithoutMeta.meta).to.eql({})
 		})
 	})
 
@@ -615,7 +814,7 @@ describe('Collection', function() {
 				}
 			}, factory)
 
-			expect(testCollection2.defaultField).to.eql('_id')
+			expect(testCollection2.defaultField).to.equal('_id')
 		})
 	})
 
@@ -664,9 +863,11 @@ describe('Collection', function() {
 
 			coll.addField('field2', 'Field2', String)
 
-			expect(coll.definition).to.have.deep.property('fields.field2')
-			expect(coll.definition.fields.field2).to.have.property('label', 'Field2')
-			expect(coll.definition.fields.field2).to.have.property('schemaType', String)
+			const field = coll.definition.getField('field2')
+
+			expect(field).to.not.be.undefined
+			expect(field.toObject()).to.have.property('label', 'Field2')
+			expect(field.toObject()).to.have.property('schemaType', String)
 		})
 	})
 
@@ -687,7 +888,7 @@ describe('Collection', function() {
 		})
 
 		it('should add a pre hook', function() {
-			const users = new Collection('users', collectionDefs.users, factory)
+			const users = new Collection('users', collectionDefs.users, factory).register()
 			const hook = chai.spy((next) => { next() })
 
 			users.attachHook('pre', 'save', hook)
@@ -700,7 +901,7 @@ describe('Collection', function() {
 		})
 
 		it('should add a post hook', function() {
-			const users = new Collection('users', collectionDefs.users, factory)
+			const users = new Collection('users', collectionDefs.users, factory).register()
 			const hook = chai.spy((doc, next) => { next() })
 
 			users.attachHook('post', 'save', hook)
@@ -739,24 +940,25 @@ describe('Collection', function() {
 			})
 
 			afterEach(function(done) {
-				delete mongoose.connection.models['posts']
+				delete mongoose.connection.models['Post']
+				delete mongoose.connection.models['User']
 				mongoose.unmock(done)
 			})
 
 			it('should return a promise', function() {
-				const usersCollection = new Collection('users', collectionDefs.users, factory)
+				const usersCollection = new Collection('users', collectionDefs.users, factory).register()
 
 				expect(usersCollection.readById(12345)).to.be.instanceof(Promise)
 			})
 
 			it('should return a query', function() {
-				const usersCollection = new Collection('users', collectionDefs.users, factory)
+				const usersCollection = new Collection('users', collectionDefs.users, factory).register()
 
 				expect(usersCollection.readById(12345, null, null, true)).to.be.instanceof(mongoose.Query)
 			})
 
 			it('should resolve with a single document', function() {
-				const usersCollection = new Collection('users', collectionDefs.users, factory)
+				const usersCollection = new Collection('users', collectionDefs.users, factory).register()
 
 				return usersCollection.model
 					.create([
@@ -781,8 +983,8 @@ describe('Collection', function() {
 			})
 
 			it('should include populated fields with resolved document', function() {
-				const usersCollection = new Collection('users', collectionDefs.users, factory)
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const usersCollection = new Collection('users', collectionDefs.users, factory).register()
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 
 				return usersCollection.model
 					.create([
@@ -814,8 +1016,8 @@ describe('Collection', function() {
 			})
 
 			it('should not include fields where `select` is false in document', function() {
-				const usersCollection = new Collection('users', collectionDefs.users, factory)
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const usersCollection = new Collection('users', collectionDefs.users, factory).register()
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 
 				return usersCollection.model
 					.create([
@@ -846,8 +1048,8 @@ describe('Collection', function() {
 			})
 
 			it('should include selected fields when overriding `select` from schema', function() {
-				const usersCollection = new Collection('users', collectionDefs.users, factory)
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const usersCollection = new Collection('users', collectionDefs.users, factory).register()
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 
 				return usersCollection.model
 					.create([
@@ -878,7 +1080,7 @@ describe('Collection', function() {
 			})
 
 			it('should resolve with null when no matching id', function() {
-				const usersCollection = new Collection('users', collectionDefs.users, factory)
+				const usersCollection = new Collection('users', collectionDefs.users, factory).register()
 				const result = usersCollection.readById(new mongoose.Types.ObjectId())
 
 				return expect(result).to.eventually.be.null
@@ -897,12 +1099,13 @@ describe('Collection', function() {
 			})
 
 			afterEach(function(done) {
-				delete mongoose.connection.models['posts']
+				delete mongoose.connection.models['Post']
+				delete mongoose.connection.models['User']
 				mongoose.unmock(done)
 			})
 
 			it('should return a promise', function() {
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 
 				const result = postsCollection.create({
 					title: 'Test 1',
@@ -914,8 +1117,8 @@ describe('Collection', function() {
 			})
 
 			it('should resolve with the new document', function() {
-				const usersCollection = new Collection('users', collectionDefs.users, factory)
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const usersCollection = new Collection('users', collectionDefs.users, factory).register()
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 
 				return usersCollection.model
 					.create([
@@ -947,8 +1150,8 @@ describe('Collection', function() {
 			})
 
 			it('should reject with validation errors', function(done) {
-				const usersCollection = new Collection('users', collectionDefs.users, factory)
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const usersCollection = new Collection('users', collectionDefs.users, factory).register()
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 
 				return usersCollection.model
 					.create([
@@ -978,8 +1181,8 @@ describe('Collection', function() {
 			})
 
 			it('should create a document version for the new document', function() {
-				const usersCollection = new Collection('users', collectionDefs.users, factory)
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const usersCollection = new Collection('users', collectionDefs.users, factory).register()
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 
 				return usersCollection.model
 					.create([
@@ -1024,12 +1227,13 @@ describe('Collection', function() {
 			})
 
 			afterEach(function(done) {
-				delete mongoose.connection.models['posts']
+				delete mongoose.connection.models['Post']
+				delete mongoose.connection.models['User']
 				mongoose.unmock(done)
 			})
 
 			it('should return a promise', function() {
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 				
 				return postsCollection.model
 					.create({
@@ -1047,7 +1251,7 @@ describe('Collection', function() {
 			})
 
 			it('should resolve with the updated collection', function() {
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 				
 				return postsCollection.model
 					.create({
@@ -1068,7 +1272,7 @@ describe('Collection', function() {
 			})
 
 			it('should overwrite the existing documents', function() {
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 				
 				return postsCollection.model
 					.create({
@@ -1093,7 +1297,7 @@ describe('Collection', function() {
 			})
 
 			it('should reject with validation errors', function(done) {
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 				
 				return postsCollection.model
 					.create({
@@ -1116,7 +1320,7 @@ describe('Collection', function() {
 			})
 
 			it('should create a new document version record for each document', function() {
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 				
 				return postsCollection.model
 					.create({
@@ -1159,12 +1363,12 @@ describe('Collection', function() {
 			})
 
 			afterEach(function(done) {
-				delete mongoose.connection.models['posts']
+				delete mongoose.connection.models['Post']
 				mongoose.unmock(done)
 			})
 
 			it('should return a promise', function() {
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 				
 				return postsCollection.model
 					.create({
@@ -1182,7 +1386,7 @@ describe('Collection', function() {
 			})
 
 			it('should resolve with the updated document', function() {
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 
 				return postsCollection.model
 					.create({
@@ -1202,7 +1406,7 @@ describe('Collection', function() {
 			})
 
 			it('should reject with validation errors', function(done) {
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 
 				return postsCollection.model
 					.create({
@@ -1226,7 +1430,7 @@ describe('Collection', function() {
 			})
 
 			it('should store a new document version', function() {
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 
 				return postsCollection.model
 					.create({
@@ -1273,12 +1477,12 @@ describe('Collection', function() {
 			})
 
 			afterEach(function(done) {
-				delete mongoose.connection.models['posts']
+				delete mongoose.connection.models['Post']
 				mongoose.unmock(done)
 			})
 
 			it('should return a promise', function() {
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 
 				return postsCollection.model
 					.create([
@@ -1299,7 +1503,7 @@ describe('Collection', function() {
 			})
 
 			it('should resolve with the deleted documents', function() {
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 
 				return postsCollection.model
 					.create([
@@ -1323,7 +1527,7 @@ describe('Collection', function() {
 			})
 
 			it('should delete all documents from the collection', function() {
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 
 				return postsCollection.model
 					.create([
@@ -1360,12 +1564,12 @@ describe('Collection', function() {
 			})
 
 			afterEach(function(done) {
-				delete mongoose.connection.models['posts']
+				delete mongoose.connection.models['Post']
 				mongoose.unmock(done)
 			})
 
 			it('should return a promise', function() {
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 
 				return postsCollection.model
 					.create([
@@ -1382,7 +1586,7 @@ describe('Collection', function() {
 			})
 
 			it('should resolve with the deleted document', function() {
-				const postsCollection = new Collection('posts', collectionDefs.posts, factory)
+				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
 
 				return postsCollection.model
 					.create({

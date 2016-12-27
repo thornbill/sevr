@@ -444,7 +444,7 @@ describe('VersionControl', function() {
 						schemaType: String
 					}
 				}
-			}, { connection: connection })
+			}, { connection: connection }).register()
 
 			return createDocVersions(coll.model, VersionControl.model, [
 				{ title: 'version test1', slug: 'test-one' },

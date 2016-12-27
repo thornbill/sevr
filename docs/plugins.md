@@ -18,18 +18,19 @@ established. The constructor should be used to setup the plugin environment.
 | sevr | `Sevr` |
 | config | `Object` | 
 
-### registerTypes() : `*`
+### loadTypes() : `*`
 This method is called after loading the types. If a plugin needs to load an
 additional type, it should be done at this time.
 
-### registerCollections() : `*`
+### loadCollections() : `*`
 Called directly after loading all collections. If a plugin needs to modify the
-collections in any way, it can be done here.
+collections in any way, it can be done here. At this time, no models of the
+collections have been created.
 
 ### didInitialize() : `*`
-This method is called once all other setup has been complete. Sevr's
-authentication mechanism is intialized just before this method call, so it
-is available at this time.
+This method is called once all other setup has been complete. Models are created
+from the collections at this time. Sevr's authentication mechanism is intialized
+just before this method call, so it is available at this time.
 
 ### willRun() : `*`
 This method is called just before Sevr emits the `ready` event.

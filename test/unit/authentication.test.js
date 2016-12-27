@@ -32,8 +32,8 @@ describe('Authentication', function() {
 		db = mongoose.connect(`mongodb://${config.connection.host}:${config.connection.port}/${config.connection.database}`, err => {
 			if (err) done(err)
 			factory.connection = db
-			authCollection = new Collection('auth', collectionDefs.authCollection, factory)
-			authErrorCollection = new Collection('authError', collectionDefs.authErrorCollection, factory)
+			authCollection = new Collection('auth', collectionDefs.authCollection, factory).register()
+			authErrorCollection = new Collection('authError', collectionDefs.authErrorCollection, factory).register()
 			done()
 		})
 	})
@@ -80,11 +80,11 @@ describe('Authentication', function() {
 
 		it('should add a setter to the `password` field', function() {
 			const auth = new Authentication('test', metaMock)
-			const schema = authCollection.schema
 			auth.enable(authCollection)
-			expect(schema.path('password').setters[0]).to.be.a('function')
 
-			const setter = schema.path('password').setters[0]
+			expect(authCollection.definition.getField('password').toObject().schemaType.set).to.be.a('function')
+
+			const setter = authCollection.definition.getField('password').toObject().schemaType.set
 			const pass = 'bad_pass'
 			expect(bcrypt.compareSync('bad_pass', setter(pass))).to.be.true
 		})
@@ -132,7 +132,7 @@ describe('Authentication', function() {
 					username: { label: 'username', schemaType: String },
 					password: { label: 'password', schemaType: String }
 				}
-			}, factory)
+			}, factory).register()
 			const auth = new Authentication('test', metaMock)
 			auth.enable(coll)
 
@@ -152,6 +152,7 @@ describe('Authentication', function() {
 			}, factory)
 			const auth = new Authentication('test', metaMock)
 			auth.enable(coll)
+			coll.register()
 
 			coll.model.create({
 				username: 'validateTest',
@@ -177,7 +178,7 @@ describe('Authentication', function() {
 					username: { label: 'username', schemaType: String },
 					password: { label: 'password', schemaType: String }
 				}
-			}, factory)
+			}, factory).register()
 			const auth = new Authentication('test', metaMock)
 			auth.enable(coll)
 
@@ -196,7 +197,7 @@ describe('Authentication', function() {
 					username: { label: 'username', schemaType: String },
 					password: { label: 'password', schemaType: String }
 				}
-			}, factory)
+			}, factory).register()
 			const auth = new Authentication('test', metaMock)
 			auth.enable(coll)
 

@@ -218,14 +218,14 @@ class Sevr {
 				// Load the types
 				// Allow plugins to register additional types
 				this._types = TypeLoader(this.config.types)
-				return this._pluginsCall('registerTypes', true)
+				return this._pluginsCall('loadTypes', true)
 			})
 			.then(() => {
 				// Load the collections
 				// Allow plugins to register additional collections
 				this._definitions = DefinitionLoader(this.config.collections, this.types)
 				this._collectionFactory = new CollectionFactory(this._definitions, this._db)
-				return this._pluginsCall('registerCollections', true)
+				return this._pluginsCall('loadCollections', true)
 			})
 			.then(() => {
 				// Intialize authentication
@@ -235,7 +235,8 @@ class Sevr {
 					})
 			})
 			.then(() => {
-				// Plugin.didInitialize lifecycle method
+				// Register the collections
+				this._collectionFactory.registerAll()
 				return this._pluginsCall('didInitialize', true)
 			})
 			.then(() => {

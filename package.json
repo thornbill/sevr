@@ -23,6 +23,9 @@
     "console-logger",
     "collection-factory",
     "collection",
+    "collections",
+    "collection-definition",
+    "field-definition",
     "authentication"
   ],
   "repository": {
