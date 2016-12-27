@@ -8,6 +8,7 @@ const mongoose        = require('mongoose')
 const mockgoose       = require('mockgoose')
 const Collection      = require('../../../collection')
 const Collections     = require('../../../collections')
+const Links           = require('../../../links')
 const VersionControl  = require('../../../lib/version-control')
 const collectionDefs  = require('../../fixtures/collections')
 
@@ -64,6 +65,10 @@ describe('Collection', function() {
 			return { model: {} }
 		}
 	}
+
+	afterEach(function() {
+		Links.clear()
+	})
 
 	describe('constructor()', function() {
 		beforeEach(function(done) {
@@ -502,7 +507,9 @@ describe('Collection', function() {
 			mongoose.unmock(done)
 		})
 
-		it.only('should return a map of options by field', function() {
+		it('should return a map of options by field', function() {
+			Links.clear()
+			Collections.clear()
 			const users = new Collection('users', {
 				singular: 'User',
 				fields: {

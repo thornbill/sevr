@@ -5,6 +5,7 @@ const chai            = require('chai')
 const mongoose        = require('mongoose')
 const FieldDefinition = require('../../field-definition')
 const Collections     = require('../../collections')
+const Links           = require('../../links')
 
 const expect = chai.expect
 
@@ -50,6 +51,8 @@ describe('FieldDefinition', function() {
 			})
 
 			expect(fd.getLinkedCollection()).to.eql({ name: 'authors' })
+
+			Links.clear()
 		})
 
 		it('should return `undefined` when field does not have a ref', function() {
@@ -94,7 +97,7 @@ describe('FieldDefinition', function() {
 			const authors = { name: 'authors', model: { modelName: 'Author' } }
 			const fd3 = new FieldDefinition('author', 'Author', {
 				type: mongoose.Types.ObjectId,
-				ref: authors
+				ref: 'Author'
 			})
 			const fd4 = new FieldDefinition('name', 'Name', {
 				first: new FieldDefinition('first', 'First', String),
@@ -125,6 +128,8 @@ describe('FieldDefinition', function() {
 				},
 				age: Number
 			})
+
+			Links.clear()
 		})
 
 		it('should flatten the field if nested and enabled', function() {

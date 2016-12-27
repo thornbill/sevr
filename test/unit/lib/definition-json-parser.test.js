@@ -12,7 +12,7 @@ const Links = require('../../../links')
 const expect = chai.expect
 
 describe('DefinitionJsonParser', function() {
-	beforeEach(function() {
+	afterEach(function() {
 		Links.clear()
 		Collections.clear()
 	})

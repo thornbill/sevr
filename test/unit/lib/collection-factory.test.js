@@ -10,7 +10,7 @@ const config            = require('../../fixtures/sevr-config')
 
 const expect = chai.expect
 
-describe.only('CollectionFactory', () => {
+describe('CollectionFactory', () => {
 
 	let db
 
