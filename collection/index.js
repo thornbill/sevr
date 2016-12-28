@@ -21,7 +21,7 @@ class Collection {
 		this._factory = factory
 		this._connection = this._factory.connection
 
-		this._definition = DefinitionJsonParser(name, def)
+		this._definition = DefinitionJsonParser(name, def, this._connection)
 
 		if (this._definition.versioned) {
 			VersionControl.applyCollectionMethods(this, this._definition.schema)

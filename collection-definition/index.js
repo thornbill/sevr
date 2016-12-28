@@ -6,7 +6,7 @@ const FieldDefinition = require('../field-definition')
 const ModelFactory    = require('../lib/model-factory')()
 
 class CollectionDefinition {
-	constructor(name, singular) {
+	constructor(name, singular, connection) {
 		this.name = name
 		this.singular = singular
 		this._meta = {}
@@ -16,6 +16,7 @@ class CollectionDefinition {
 		this.versioned = true
 		this._locked = false
 		this._schema = new mongoose.Schema()
+		this.connection = connection
 	}
 
 	/**
@@ -319,7 +320,7 @@ class CollectionDefinition {
 		this._locked = true
 
 		return ModelFactory.create(
-			mongoose.model(this.singular, this.schema)
+			this.connection.model(this.singular, this.schema)
 		)
 	}
 
