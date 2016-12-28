@@ -503,6 +503,7 @@ describe('Collection', function() {
 			delete mongoose.connection.models['Test1']
 			delete mongoose.connection.models['User']
 			delete mongoose.connection.models['Post']
+			delete mongoose.connection.models['version']
 			Collections.clear()
 			mongoose.unmock(done)
 		})
@@ -531,6 +532,8 @@ describe('Collection', function() {
 					}
 				}
 			}, factory).register()
+
+			VersionControl.createModel(factory.connection)
 
 			Collections.add('users', 'User', users)
 			Collections.add('posts', 'Post', posts)

@@ -13,6 +13,7 @@ const defaultLogger     = require('./console-logger')
 const Errors            = require('./errors')
 const Meta              = require('./lib/meta')
 const utils             = require('./lib/utils')
+const VersionControl    = require('./lib/version-control')
 
 global.$logger = defaultLogger
 
@@ -209,9 +210,11 @@ class Sevr {
 	start() {
 		return this.connect()
 			.then(() => {
-				// Create the meta collection
+				// Create the meta collection and the version control collection
 				// Initialize plugins
 				Meta.createModel(this._db)
+				VersionControl.createModel(this._db)
+				
 				return this._initPlugins()
 			})
 			.then(() => {

@@ -52,6 +52,7 @@ describe('VersionControl', function() {
 
 		afterEach(function(done) {
 			delete mongoose.connection.models['posts']
+			delete mongoose.connection.models['version']
 			mongoose.unmock(done)
 		})
 
@@ -63,8 +64,9 @@ describe('VersionControl', function() {
 					slug: String
 				})
 			)
+			const vcModel = VersionControl.createModel(connection)
 
-			return createDocVersions(model, VersionControl.model, [
+			return createDocVersions(model, vcModel, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' }
 			])
@@ -86,8 +88,9 @@ describe('VersionControl', function() {
 					slug: String
 				})
 			)
+			const vcModel = VersionControl.createModel(connection)
 
-			return createDocVersions(model, VersionControl.model, [
+			return createDocVersions(model, vcModel, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' }
 			])
@@ -112,6 +115,7 @@ describe('VersionControl', function() {
 
 		afterEach(function(done) {
 			delete mongoose.connection.models['posts']
+			delete mongoose.connection.models['version']
 			mongoose.unmock(done)
 		})
 
@@ -123,8 +127,9 @@ describe('VersionControl', function() {
 					slug: String
 				})
 			)
+			const vcModel = VersionControl.createModel(connection)
 
-			return createDocVersions(model, VersionControl.model, [
+			return createDocVersions(model, vcModel, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' },
 				{ slug: 'test-two' }
@@ -151,6 +156,7 @@ describe('VersionControl', function() {
 
 		afterEach(function(done) {
 			delete mongoose.connection.models['posts']
+			delete mongoose.connection.models['version']
 			mongoose.unmock(done)
 		})
 
@@ -162,8 +168,9 @@ describe('VersionControl', function() {
 					slug: String
 				})
 			)
+			const vcModel = VersionControl.createModel(connection)
 
-			return createDocVersions(model, VersionControl.model, [
+			return createDocVersions(model, vcModel, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' },
 				{ slug: 'test-two' }
@@ -193,6 +200,7 @@ describe('VersionControl', function() {
 
 		afterEach(function(done) {
 			delete mongoose.connection.models['posts']
+			delete mongoose.connection.models['version']
 			mongoose.unmock(done)
 		})
 
@@ -204,8 +212,9 @@ describe('VersionControl', function() {
 					slug: String
 				})
 			)
+			const vcModel = VersionControl.createModel(connection)
 
-			return createDocVersions(model, VersionControl.model, [
+			return createDocVersions(model, vcModel, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' }
 			])
@@ -233,6 +242,7 @@ describe('VersionControl', function() {
 
 		afterEach(function(done) {
 			delete mongoose.connection.models['posts']
+			delete mongoose.connection.models['version']
 			mongoose.unmock(done)
 		})
 
@@ -244,8 +254,9 @@ describe('VersionControl', function() {
 					slug: String
 				})
 			)
+			const vcModel = VersionControl.createModel(connection)
 
-			return createDocVersions(model, VersionControl.model, [
+			return createDocVersions(model, vcModel, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' }
 			])
@@ -274,6 +285,7 @@ describe('VersionControl', function() {
 
 		afterEach(function(done) {
 			delete mongoose.connection.models['posts']
+			delete mongoose.connection.models['version']
 			mongoose.unmock(done)
 		})
 
@@ -285,8 +297,9 @@ describe('VersionControl', function() {
 					slug: String
 				})
 			)
+			const vcModel = VersionControl.createModel(connection)
 
-			return createDocVersions(model, VersionControl.model, [
+			return createDocVersions(model, vcModel, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' },
 				{ slug: 'test-two' }
@@ -319,6 +332,7 @@ describe('VersionControl', function() {
 
 		afterEach(function(done) {
 			delete mongoose.connection.models['posts']
+			delete mongoose.connection.models['version']
 			mongoose.unmock(done)
 		})
 
@@ -427,6 +441,7 @@ describe('VersionControl', function() {
 
 		afterEach(function(done) {
 			delete mongoose.connection.models['posts']
+			delete mongoose.connection.models['version']
 			mongoose.unmock(done)
 		})
 
@@ -445,8 +460,9 @@ describe('VersionControl', function() {
 					}
 				}
 			}, { connection: connection }).register()
+			const vcModel = VersionControl.createModel(connection)
 
-			return createDocVersions(coll.model, VersionControl.model, [
+			return createDocVersions(coll.model, vcModel, [
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' },
 				{ slug: 'test-two' }
