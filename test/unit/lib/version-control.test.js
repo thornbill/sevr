@@ -10,7 +10,7 @@ const VersionControl = require('../../../lib/version-control')
 
 const expect = chai.expect
 
-function createDocVersions(docModel, vcModel, docs) {
+function createDocVersions(docModel, vcModel, docs, skipVersions) {
 	return docs.reduce((acc, doc, i) => {
 		return acc.then(prevDoc => {
 			let prom
@@ -18,7 +18,7 @@ function createDocVersions(docModel, vcModel, docs) {
 				prom = docModel.create(doc)
 			} else {
 				prom = docModel
-					.findByIdAndUpdate(prevDoc._id, doc).exec()
+					.findByIdAndUpdate(prevDoc._id, doc)
 					.then(() => {
 						return docModel.findById(prevDoc._id).exec()
 					})
@@ -26,6 +26,8 @@ function createDocVersions(docModel, vcModel, docs) {
 
 			return prom
 				.then(newDoc => {
+					if (skipVersions) return newDoc.toObject()
+
 					return vcModel.create({
 						documentId: newDoc._id,
 						changes: deepDiff.diff(prevDoc, newDoc.toObject()),
@@ -466,7 +468,7 @@ describe('VersionControl', function() {
 				{ title: 'version test1', slug: 'test-one' },
 				{ title: 'version test2' },
 				{ slug: 'test-two' }
-			])
+			], true)
 			.then(id => {
 				return VersionControl.getVersions(id).then(versions => ({ id, versions }))
 			})

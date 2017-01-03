@@ -34,6 +34,9 @@ class CollectionFactory {
 		for (let key in this._definitions) {
 			this._definitions[key].name = key
 			this._instances[key] = this.getInstance(key)
+			
+			// Add collection to Collections list
+			Collections.add(key, this._definitions[key].singular, this._instances[key])
 		}
 		
 		// Gather Model Names

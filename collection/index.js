@@ -409,6 +409,45 @@ class Collection {
 	 */
 	register() {
 		this._model = this._definition.buildModel()
+
+		// Force update operations to return the updated documents
+		// rather than the originals
+		this.useAfter('update', docs => {
+			if (Array.isArray(docs)) {
+				return Promise.all(
+					docs.map(d => {
+						return this.readById(d.id)
+					})
+				)
+			} else {
+				return this.readById(docs.id)
+			}
+		})
+
+		// Save a new version when the document is updated
+		if (this._definition.versioned) {
+			this.useAfter('update', saveDocsVersions)
+			this.useAfter('create', saveDocsVersions)
+		}
+
+		function saveDocsVersions(docs) {
+			if (Array.isArray(docs)) {
+				return Promise.all(
+					docs.map(d => {
+						return d.saveVersion().then(() => d) 
+					})
+				)
+			} else if (docs) {
+				return docs
+					.saveVersion()
+					.then(() => {
+						return docs
+					})
+			} else {
+				return docs
+			}
+		}
+
 		return this
 	}
 
@@ -527,21 +566,6 @@ class Collection {
 					return doc
 				}
 			})
-			.then(doc => {
-				if (Array.isArray(doc)) {
-					return Promise.all(
-						doc.map(d => {
-							return d.saveVersion().then(() => d) 
-						})
-					)
-				} else {
-					return doc
-						.saveVersion()
-						.then(() => {
-							return doc
-						})
-				}
-			})
 	}
 
 	/**
@@ -589,16 +613,6 @@ class Collection {
 		.then(() => {
 			return self.model.insertMany(docs)
 		})
-		.then(docs => {
-			// Save the document versions
-			const promises = docs.map(doc => {
-				return doc.saveVersion()
-			})
-
-			return Promise
-				.all(promises)
-				.then(() => { return docs })
-		})
 	}
 
 	/**
@@ -616,7 +630,6 @@ class Collection {
 				new: true,
 				runValidators: true
 			})
-			.exec()
 			.then(doc => {
 				return doc
 					.saveVersion()

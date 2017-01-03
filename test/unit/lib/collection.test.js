@@ -11,6 +11,7 @@ const Collections     = require('../../../collections')
 const Links           = require('../../../links')
 const VersionControl  = require('../../../lib/version-control')
 const collectionDefs  = require('../../fixtures/collections')
+const ModelFactory    = require('../../../lib/model-factory')
 
 const expect = chai.expect
 const fixtures = {
@@ -68,6 +69,8 @@ describe('Collection', function() {
 
 	afterEach(function() {
 		Links.clear()
+		Collections.clear()
+		ModelFactory().flush()
 	})
 
 	describe('constructor()', function() {
@@ -76,6 +79,7 @@ describe('Collection', function() {
 				.then(() => {
 					mongoose.connect('mongodb://testing', err => {
 						factory.connection = mongoose.connection
+						VersionControl.createModel(factory.connection)
 						done(err)
 					})
 				})
@@ -84,6 +88,7 @@ describe('Collection', function() {
 		afterEach(function(done) {
 			delete mongoose.connection.models['Test']
 			delete mongoose.connection.models['User']
+			delete mongoose.connection.models['version']
 			mongoose.unmock(done)
 		})
 
@@ -494,23 +499,20 @@ describe('Collection', function() {
 				.then(() => {
 					mongoose.connect('mongodb://testing', err => {
 						factory.connection = mongoose.connection
+						VersionControl.createModel(factory.connection)
 						done(err)
 					})
 				})
 		})
 
 		afterEach(function(done) {
-			delete mongoose.connection.models['Test1']
 			delete mongoose.connection.models['User']
 			delete mongoose.connection.models['Post']
 			delete mongoose.connection.models['version']
-			Collections.clear()
 			mongoose.unmock(done)
 		})
 
 		it('should return a map of options by field', function() {
-			Links.clear()
-			Collections.clear()
 			const users = new Collection('users', {
 				singular: 'User',
 				fields: {
@@ -532,8 +534,6 @@ describe('Collection', function() {
 					}
 				}
 			}, factory).register()
-
-			VersionControl.createModel(factory.connection)
 
 			Collections.add('users', 'User', users)
 			Collections.add('posts', 'Post', posts)
@@ -944,6 +944,7 @@ describe('Collection', function() {
 					.then(() => {
 						mongoose.connect('mongodb://testing', err => {
 							factory.connection = mongoose.connection
+							VersionControl.createModel(factory.connection)
 							done(err)
 						})
 					})
@@ -952,6 +953,7 @@ describe('Collection', function() {
 			afterEach(function(done) {
 				delete mongoose.connection.models['Post']
 				delete mongoose.connection.models['User']
+				delete mongoose.connection.models['version']
 				mongoose.unmock(done)
 			})
 
@@ -970,7 +972,7 @@ describe('Collection', function() {
 			it('should resolve with a single document', function() {
 				const usersCollection = new Collection('users', collectionDefs.users, factory).register()
 
-				return usersCollection.model
+				return usersCollection
 					.create([
 						{
 							_id: ids[0],
@@ -1058,8 +1060,10 @@ describe('Collection', function() {
 			})
 
 			it('should include selected fields when overriding `select` from schema', function() {
+				// ModelFactory.flush()
 				const usersCollection = new Collection('users', collectionDefs.users, factory).register()
 				const postsCollection = new Collection('posts', collectionDefs.posts, factory).register()
+				
 
 				return usersCollection.model
 					.create([
@@ -1075,7 +1079,7 @@ describe('Collection', function() {
 						}
 					])
 					.then(() => {
-						return postsCollection.model
+						return postsCollection
 							.create({
 								title: 'Test Post',
 								author: ids[0]
@@ -1367,6 +1371,7 @@ describe('Collection', function() {
 					.then(() => {
 						mongoose.connect('mongodb://testing', err => {
 							factory.connection = mongoose.connection
+							VersionControl.createModel(factory.connection)
 							done(err)
 						})
 					})
@@ -1374,6 +1379,7 @@ describe('Collection', function() {
 
 			afterEach(function(done) {
 				delete mongoose.connection.models['Post']
+				delete mongoose.connection.models['version']
 				mongoose.unmock(done)
 			})
 
@@ -1457,7 +1463,7 @@ describe('Collection', function() {
 						return VersionControl.getVersions(doc._id)
 					})
 					.then(versions => {
-						expect(versions).to.have.length(1)
+						expect(versions).to.have.length(2)
 						expect(versions[0].doc).to.have.property('content', 'test1')
 
 						return postsCollection.updateById(versions[0].version.documentId, {
@@ -1468,7 +1474,7 @@ describe('Collection', function() {
 						return VersionControl.getVersions(doc._id)
 					})
 					.then(versions => {
-						expect(versions).to.have.length(2)
+						expect(versions).to.have.length(3)
 						expect(versions[0].doc).to.have.property('content', 'test2')
 						expect(versions[1].doc).to.have.property('content', 'test1')
 					})

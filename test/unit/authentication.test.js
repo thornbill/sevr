@@ -10,6 +10,7 @@ const Collection     = require('../../collection')
 const collectionDefs = require('../fixtures/collections')
 const config         = require('../fixtures/sevr-config')
 const Meta           = require('../../lib/meta')
+const VersionControl = require('../../lib/version-control')
 
 const expect = chai.expect
 const secret = 'imasecret'
@@ -34,6 +35,7 @@ describe('Authentication', function() {
 			factory.connection = db
 			authCollection = new Collection('auth', collectionDefs.authCollection, factory).register()
 			authErrorCollection = new Collection('authError', collectionDefs.authErrorCollection, factory).register()
+			VersionControl.createModel(factory.connection)
 			done()
 		})
 	})
@@ -41,6 +43,7 @@ describe('Authentication', function() {
 	after(function() {
 		mongoose.connection.db.dropDatabase()
 		mongoose.connection.db.close()
+		delete mongoose.connection.models['version']
 	})
 
 	it('should be disabled by default', function() {
