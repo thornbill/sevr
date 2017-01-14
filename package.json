@@ -19,6 +19,7 @@
     "index.js",
     "default-config.js",
     "lib",
+	"links",
     "errors",
     "console-logger",
     "collection-factory",
