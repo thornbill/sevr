@@ -27,6 +27,10 @@ Called directly after loading all collections. If a plugin needs to modify the
 collections in any way, it can be done here. At this time, no models of the
 collections have been created.
 
+### willInitialize() : `*`
+Called just after authentication has been setup, and before colleection models
+have been created.
+
 ### didInitialize() : `*`
 This method is called once all other setup has been complete. Models are created
 from the collections at this time. Sevr's authentication mechanism is intialized

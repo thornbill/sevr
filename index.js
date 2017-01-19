@@ -231,11 +231,14 @@ class Sevr {
 				return this._pluginsCall('loadCollections', true)
 			})
 			.then(() => {
-				// Intialize authentication
+				// Register authentication meta collection
 				return Meta.getInstance('sevr-auth')
 					.then(meta => {
 						this._auth.setMeta(meta)
 					})
+			})
+			.then(() => {
+				return this._pluginsCall('willInitialize', true)
 			})
 			.then(() => {
 				// Register the collections
