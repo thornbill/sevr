@@ -81,7 +81,7 @@ defining them, with a collection definition, a JavaScript object, which defines
 the structure and behavior of data within that collection. Collection
 definitions are defined in the `collections` directory. Each defintion should
 be in its own file. More information on creating collection definitions can be
-found with the [Collection API](docs/collections).
+found with the [Collection API](docs/collections.md).
 
 ### Types
 
@@ -91,7 +91,7 @@ collection definitions, these are JavaScript objects, which define the
 underlying data type, validation, and various meta information. Custom types
 are defined in the `types` directory. Each type should be in its own file.
 More information on creating custom types can be found with the
-[Type API](docs/type/README.md).
+[Type API](docs/types.md).
 
 ### Plugins
 
@@ -100,7 +100,7 @@ with the data layer and providing a web server instance. Most applications built
 on the Sevr Framework will need to add a few plugins to enable the features
 needed for a full functioning system. The lean core here, allows for great
 flexibility without adding a lot of unnecessary bloat to your projects. More
-information about plugins can be found with the [Plugin API](docs/plugin)
+information about plugins can be found with the [Plugin API](docs/plugins.md)
 
 ## Tests
 
